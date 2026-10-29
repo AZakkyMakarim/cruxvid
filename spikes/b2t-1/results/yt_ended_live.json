@@ -1,0 +1,81 @@
+{
+  "name": "yt_ended_live",
+  "url": "https://www.youtube.com/watch?v=oPl_Vm3p2rA",
+  "title": "NASA news conference on Artemis II mission to the moon | full video",
+  "duration_s": 3464,
+  "live_status": "was_live",
+  "format": "398 - 1280x720 (720p)+251 - audio only (medium)",
+  "source_size_bytes_est": 175919480,
+  "source_size_basis": "sum of requested_formats filesize/filesize_approx, else tbr*duration",
+  "metadata_only_bytes": 974737,
+  "clip": [
+    1200.0,
+    1290.0
+  ],
+  "runs": {
+    "A0_streamcut_untuned": {
+      "tuned": false,
+      "down_bytes": 9294455,
+      "up_bytes": 10524,
+      "tls_conns": 3,
+      "secs": 120.3,
+      "rc": "timeout",
+      "err": "killed after 120s; bytes are a lower bound",
+      "pct_of_source": 5.28
+    },
+    "A_streamcut_exact": {
+      "tuned": true,
+      "down_bytes": 10793320,
+      "up_bytes": 17223,
+      "tls_conns": 4,
+      "secs": 28.4,
+      "rc": 0,
+      "err": "",
+      "pct_of_source": 6.14,
+      "out_duration_s": 90.0,
+      "duration_ok": true,
+      "file": "yt_ended_live_A_streamcut_exact.mp4",
+      "streams": [
+        "h264",
+        "aac"
+      ],
+      "start_offset_vs_B_s": 0.0
+    },
+    "A2_streamcut_keyframe": {
+      "tuned": true,
+      "down_bytes": 10524685,
+      "up_bytes": 17226,
+      "tls_conns": 4,
+      "secs": 5.1,
+      "rc": 0,
+      "err": "",
+      "pct_of_source": 5.98,
+      "out_duration_s": 90.014,
+      "duration_ok": true,
+      "file": "yt_ended_live_A2_streamcut_keyframe.mp4",
+      "streams": [
+        "av1",
+        "opus"
+      ],
+      "start_offset_vs_B_s": 0.0
+    },
+    "B_padded_then_local": {
+      "tuned": true,
+      "down_bytes": 11307219,
+      "up_bytes": 18848,
+      "tls_conns": 4,
+      "secs": 5.1,
+      "rc": 0,
+      "err": "",
+      "pct_of_source": 6.43,
+      "padded_file_bytes": 6068315,
+      "out_duration_s": 90.0,
+      "duration_ok": true,
+      "file": "yt_ended_live_B_final.mp4",
+      "streams": [
+        "h264",
+        "aac"
+      ]
+    }
+  }
+}
