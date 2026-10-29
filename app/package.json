@@ -1,0 +1,16 @@
+{
+  "name": "cruxvid-app",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "tauri": "tauri",
+    "build": "tauri build",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.55.0",
+    "@tauri-apps/cli": "^2",
+    "@types/node": "^24.19.2",
+    "typescript": "^5.9.3"
+  }
+}
