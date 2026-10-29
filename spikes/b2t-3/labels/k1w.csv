@@ -1,0 +1,18 @@
+# k1w = Colbert (left, slot 0) + Kimmel (right, slot 1), Jimmy Kimmel Live, window 230-470 s of video FcUeQW3tSq0 (t below is seconds into the window).
+# Labels: manual, from YouTube auto-caption turn markers (>>) + content + 220x165 face-crop contact sheets at 1 fps. Only wide/two-face seconds labelled; short interjections left out.
+start,end,slot
+11,29,1
+29,30,0
+35,37,1
+44,48,1
+48,49,0
+50,52,1
+62,64,1
+74,81,1
+83,85,0
+189,195,1
+196,200,1
+202,208,1
+208,211,0
+211,215,1
+218,225,1

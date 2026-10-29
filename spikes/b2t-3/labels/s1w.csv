@@ -1,0 +1,9 @@
+# s1w = SmartLess hosts on Kimmel's couch, 3 people (slot 0 Sean Hayes left, 1 Jason Bateman middle, 2 Will Arnett right; Kimmel would be slot 3), window 60-240 s of video pe1sl0xMv30.
+# Labels: manual from 3-face crop contact sheets at 1 fps (mouth shape + gesture). Captions have no speaker markers, so this is the WEAKEST ground truth: overlapping chatter and laughter
+# made most seconds unlabellable; only 14 seconds where one mouth was clearly moving and the others were not.
+start,end,slot
+20,23,0
+32,36,2
+37,39,2
+49,53,2
+56,57,2
