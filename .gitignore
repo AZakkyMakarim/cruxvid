@@ -4,3 +4,10 @@
 *.db
 .beads-credential-key
 .beads/proxieddb/
+
+# spike b2t-3: local venv, models, media, run outputs
+spikes/b2t-3/.venv/
+spikes/b2t-3/models/
+spikes/b2t-3/media/
+spikes/b2t-3/out/
+spikes/b2t-3/__pycache__/
