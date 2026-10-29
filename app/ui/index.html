@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cruxvid</title>
+</head>
+<body>
+  <h1>Cruxvid</h1>
+  <button id="test-btn" type="button">Run test</button>
+  <p id="result" role="status"></p>
+  <script>
+    document.getElementById('test-btn').addEventListener('click', async () => {
+      const out = document.getElementById('result');
+      try {
+        const c = await window.__TAURI__.core.invoke('get_config');
+        out.textContent = `ok test_mode=${c.test_mode} gemini=${c.gemini_base_url} resolver=${c.source_resolver}`;
+      } catch (e) {
+        out.textContent = `error ${e}`;
+      }
+    });
+  </script>
+</body>
+</html>
