@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "cruxvid",
+  "project_id": "49ec9bd6-8287-46e9-94e8-5c2340febc42"
+}
