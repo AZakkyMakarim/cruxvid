@@ -1,0 +1,72 @@
+{
+  "name": "twitch_vod",
+  "url": "https://www.twitch.tv/videos/2670809825",
+  "title": "How do you build a Moon rocket? LEGO Technic build and chat with NASA experts",
+  "duration_s": 3204,
+  "live_status": "was_live",
+  "format": "720p-1 - 1280x720 (Source)",
+  "source_size_bytes_est": 1107362875,
+  "source_size_basis": "sum of requested_formats filesize/filesize_approx, else tbr*duration",
+  "metadata_only_bytes": 25713,
+  "clip": [
+    1200.0,
+    1290.0
+  ],
+  "runs": {
+    "A0_streamcut_untuned": {
+      "tuned": false,
+      "down_bytes": 36533699,
+      "up_bytes": 14848,
+      "tls_conns": 8,
+      "secs": 36.0,
+      "rc": 0,
+      "err": "",
+      "pct_of_source": 3.3,
+      "out_duration_s": 90.023,
+      "duration_ok": true,
+      "file": "twitch_vod_A0_streamcut_untuned.mp4"
+    },
+    "A_streamcut_exact": {
+      "tuned": true,
+      "down_bytes": 37186487,
+      "up_bytes": 14884,
+      "tls_conns": 8,
+      "secs": 27.2,
+      "rc": 0,
+      "err": "",
+      "pct_of_source": 3.36,
+      "out_duration_s": 90.023,
+      "duration_ok": true,
+      "file": "twitch_vod_A_streamcut_exact.mp4",
+      "start_offset_vs_B_s": 0.0
+    },
+    "A2_streamcut_keyframe": {
+      "tuned": true,
+      "down_bytes": 36506673,
+      "up_bytes": 14428,
+      "tls_conns": 8,
+      "secs": 9.2,
+      "rc": 0,
+      "err": "",
+      "pct_of_source": 3.3,
+      "out_duration_s": 90.024,
+      "duration_ok": true,
+      "file": "twitch_vod_A2_streamcut_keyframe.mp4",
+      "start_offset_vs_B_s": 0.0
+    },
+    "B_padded_then_local": {
+      "tuned": true,
+      "down_bytes": 42789579,
+      "up_bytes": 15340,
+      "tls_conns": 8,
+      "secs": 14.0,
+      "rc": 0,
+      "err": "",
+      "pct_of_source": 3.86,
+      "padded_file_bytes": 40328863,
+      "out_duration_s": 90.023,
+      "duration_ok": true,
+      "file": "twitch_vod_B_final.mp4"
+    }
+  }
+}
