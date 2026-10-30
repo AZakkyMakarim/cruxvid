@@ -57,3 +57,11 @@ export const getClipFrameAt = async (projectId, clipId, t) =>
 // Project history (cruxvid-b2t.16)
 export const listProjects = () => invoke('list_projects');
 export const openProject = (id) => invoke('open_project', { id });
+
+// Preview, trim and manual Clips (cruxvid-b2t.17)
+export const createManualProject = (path) => invoke('create_manual_project', { path });
+export const addManualClip = (projectId, start, end) => invoke('add_manual_clip', { projectId, start, end });
+export const setClipRange = (projectId, clipId, start, end) => invoke('set_clip_range', { projectId, clipId, start, end });
+export const rangeWarning = (start, end) => invoke('range_warning', { start, end });
+export const clipPreview = (projectId, clipId) => invoke('clip_preview', { projectId, clipId });
+export const previewUrl = (path) => window.__TAURI__.core.convertFileSrc(path);

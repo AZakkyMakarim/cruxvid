@@ -4,6 +4,8 @@ pub mod audio;
 pub mod caption;
 pub mod clip_text;
 mod clip_text_commands;
+pub mod clip_range;
+mod clip_range_commands;
 pub mod clips;
 mod commands;
 pub mod config;
@@ -92,7 +94,12 @@ pub fn run() {
             speaker_commands::get_layout_at,
             speaker_commands::get_clip_frame_at,
             history::list_projects,
-            history::open_project
+            history::open_project,
+            clip_range_commands::create_manual_project,
+            clip_range_commands::add_manual_clip,
+            clip_range_commands::set_clip_range,
+            clip_range_commands::range_warning,
+            clip_range_commands::clip_preview
         ])
         .run(tauri::generate_context!())
         .expect("error while running cruxvid");

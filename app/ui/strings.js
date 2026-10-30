@@ -109,3 +109,17 @@ strings.speakerScrub = 'Preview time (s)';
 // Project history.
 strings.history = 'Projects';
 strings.historyOpen = 'Open';
+
+// Preview, trim and manual Clips (cruxvid-b2t.17).
+strings.manualOpen = 'Open without analysis';
+strings.manualAdd = 'Add Clip';
+strings.preview = 'Preview';
+strings.rangeStart = 'Start';
+strings.rangeEnd = 'End';
+strings.rangeApply = 'Apply range';
+strings.badTime = 'Enter a time like 95 or 1:35.';
+strings.previewFailed = 'Cannot play this video here.';
+strings.rangeWarnings = {
+  too_short: 'Shorter than 60 s. It can still be exported.',
+  too_long: 'Longer than 120 s. It can still be exported.',
+};

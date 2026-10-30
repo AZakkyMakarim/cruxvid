@@ -43,3 +43,9 @@ body { font-family: system-ui, sans-serif; margin: 1rem 1.5rem; }
 #history-list { list-style: none; padding: 0; }
 .history-item { display: flex; gap: 1rem; padding: .2rem 0; }
 #history-error { color: #b00020; }
+
+#manual-clip label, .clip-range-editor label { margin-right: .5rem; }
+.range-error, #manual-error { color: #b00020; }
+.range-warning[data-warning], #manual-warning { color: #8a5a00; }
+.clip-preview { display: block; width: 480px; max-width: 100%; margin: .4rem 0; background: #000; }
+.clip-preview[hidden] { display: none; }

@@ -1,6 +1,7 @@
 // Clip list: one row per Clip (time range, title, Hook score) with an Export button.
 import { exportClip } from './api.js';
 import { attachClipText } from './clip-text.js';
+import { attachClipRange } from './clip-range.js';
 import { attachLayoutButton } from './layout-editor.js';
 import { strings } from './strings.js';
 
@@ -52,6 +53,7 @@ export function renderClips(project) {
       btn,
       result,
     );
+    attachClipRange(li, project, clip, (c) => (li.querySelector('.clip-range').textContent = `${formatTime(c.start)} - ${formatTime(c.end)}`));
     attachLayoutButton(li, project, clip);
     attachClipText(li, project, clip, li.querySelector('.clip-title'));
     list.append(li);
