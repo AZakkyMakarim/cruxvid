@@ -28,7 +28,9 @@ export async function startFakeGemini(): Promise<{ url: string; close: () => voi
     req.on('end', () => {
       const file = body.includes('CRUXVID_TASK: transcribe')
         ? 'gemini_transcribe_response.json'
-        : body.includes('CRUXVID_TASK: describe')
+        : body.includes('CRUXVID_TASK: translate')
+          ? 'gemini_translate_response.json'
+          : body.includes('CRUXVID_TASK: describe')
           ? 'gemini_describe_response.json'
           : body.includes('CRUXVID_TASK: speakers')
             ? 'gemini_speakers_response.json'

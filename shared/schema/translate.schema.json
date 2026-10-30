@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Clip translation (Gemini response text for the translate task)",
+  "type": "object",
+  "required": ["text", "title", "description"],
+  "properties": {
+    "text": { "type": "string", "description": "The whole Caption, translated, words in order." },
+    "title": { "type": "string" },
+    "description": { "type": "string" }
+  },
+  "additionalProperties": false
+}

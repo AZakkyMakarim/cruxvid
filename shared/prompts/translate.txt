@@ -1,0 +1,4 @@
+CRUXVID_TASK: translate
+Translate the caption, title and description of the video clip below into the language on the "Language:" line (ISO 639-1 code or language name).
+Keep the meaning and tone; return plain text only, no markup. Translate only what is given.
+Return JSON only, matching shared/schema/translate.schema.json.

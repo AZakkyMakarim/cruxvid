@@ -41,6 +41,7 @@ pub struct Engine {
     data_dir: PathBuf,
     store: ProjectStore,
     captions: CaptionStore,
+    translations: crate::translate::TranslationStore,
     layouts: LayoutStore,
     output: OutputFolder,
     queue: JobQueue,
@@ -69,6 +70,7 @@ impl Engine {
             timeout: gemini::DEFAULT_TIMEOUT,
             store: ProjectStore::new(cfg.data_dir.clone()),
             captions: CaptionStore::new(cfg.data_dir.clone()),
+            translations: crate::translate::TranslationStore::new(cfg.data_dir.clone()),
             layouts: LayoutStore::new(cfg.data_dir.clone()),
             queue: JobQueue::new(cfg.data_dir.clone()),
             ytdlp: ytdlp::YtDlp::new(default_ytdlp(&cfg.data_dir), cfg.data_dir.join("ytdlp-update.txt")),
@@ -161,8 +163,27 @@ impl Engine {
         let clip = p.clips.iter().find(|c| c.id == clip_id).ok_or_else(|| format!("Clip not found: {clip_id}"))?;
         let (media, view) = self.clip_media(project_id, &p, clip)?;
         let vf = self.clip_layout(project_id, clip_id)?.filter(export::export_fps(media.fps));
-        let ass = caption::ass(clip, &self.captions.load(project_id).view(&p.transcript, clip));
+        let ass = self.caption_ass(project_id, clip_id)?;
         export::export_clip_with(&media, &view, &self.output.get(), Some(&vf), Some(&ass))
+    }
+
+    /// The ASS file Export burns in: the Clip's Caption, translated when the Clip has a translation.
+    pub fn caption_ass(&self, project_id: &str, clip_id: &str) -> Result<String, String> {
+        let p = self.store.load(project_id)?;
+        let clip = p.clips.iter().find(|c| c.id == clip_id).ok_or_else(|| format!("Clip not found: {clip_id}"))?;
+        Ok(caption::ass(clip, &self.caption(project_id, clip_id)?))
+    }
+
+    /// Translates one Clip's Caption, title and description ("" = back to the original). Other Clips are untouched;
+    /// on error the Clip stays as it was.
+    pub fn set_clip_language(&self, project_id: &str, clip_id: &str, language: &str) -> Result<clips::Clip, String> {
+        crate::translate::set_language(&self.store, &self.translations, &self.captions, || self.client(), project_id, clip_id, language)
+    }
+
+    /// The Clip's translation language, "" when it shows the original.
+    pub fn clip_language(&self, project_id: &str, clip_id: &str) -> Result<String, String> {
+        self.store.load(project_id)?;
+        Ok(self.translations.load(project_id).language(clip_id).unwrap_or_default().to_string())
     }
 
     /// Manual title/description edit, saved in the Project.
@@ -172,7 +193,8 @@ impl Engine {
 
     /// New AI text for one field of one Clip; on error the old text stays.
     pub fn regenerate_clip_text(&self, project_id: &str, clip_id: &str, field: crate::clip_text::TextField) -> Result<clips::Clip, String> {
-        crate::clip_text::regenerate(&self.store, &self.client()?, project_id, clip_id, field)
+        let translations = self.translations.load(project_id);
+        crate::clip_text::regenerate(&self.store, &self.client()?, project_id, clip_id, field, translations.language(clip_id))
     }
 
     pub fn data_dir(&self) -> &Path {
@@ -238,7 +260,8 @@ impl Engine {
     pub fn caption(&self, project_id: &str, clip_id: &str) -> Result<ClipCaption, String> {
         let p = self.store.load(project_id)?;
         let clip = p.clips.iter().find(|c| c.id == clip_id).ok_or_else(|| format!("Clip not found: {clip_id}"))?;
-        Ok(self.captions.load(project_id).view(&p.transcript, clip))
+        let view = self.captions.load(project_id).view(&p.transcript, clip);
+        Ok(crate::translate::overlay(view, self.translations.load(project_id).get(clip_id)))
     }
 
     pub fn set_caption_style(&self, project_id: &str, clip_id: &str, style: CaptionStyle) -> Result<ClipCaption, String> {
