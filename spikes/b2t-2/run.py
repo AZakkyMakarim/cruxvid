@@ -34,7 +34,7 @@ def make_ass(path):
                          for j, x in enumerate(words[g0:g0 + GROUP]))  # upper() the words only, never the tags
         ev.append(f"Dialogue: 0,{ts(i * WORD_S)},{ts((i + 1) * WORD_S)},Default,,0,0,0,,{line}")
     head = TMPL.read_text("utf-8")
-    for k, v in {"FONT": "Arial", "SIZE": "68", "OUTLINE": "6", "MARGIN_V": "420"}.items():
+    for k, v in {"FONT": "Arial", "SIZE": "68", "COLOR": "&H00FFFFFF", "OUTLINE": "6", "MARGIN_V": "420"}.items():
         head = head.replace("{{%s}}" % k, v)
     path.write_text(head + "\n".join(ev) + "\n", "utf-8")
     return len(ev)

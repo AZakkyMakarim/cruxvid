@@ -13,3 +13,14 @@ export const strings = {
   exporting: 'Exporting...',
   exported: (p) => `Saved ${p}`,
 };
+
+// Caption panel.
+strings.caption = 'Caption';
+strings.captionPreset = 'Preset';
+strings.captionFont = 'Font';
+strings.captionSize = 'Size';
+strings.captionColor = 'Color';
+strings.captionHighlight = 'Highlight';
+strings.captionOutline = 'Outline';
+strings.captionPosition = 'Position';
+strings.captionWords = 'Words (edit to correct; empty restores the original)';

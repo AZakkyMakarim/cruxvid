@@ -1,3 +1,4 @@
+pub mod caption;
 pub mod clips;
 mod commands;
 pub mod config;
@@ -33,7 +34,11 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::get_config,
             commands::analyze_source,
-            commands::export_clip
+            commands::export_clip,
+            commands::caption_presets,
+            commands::get_caption,
+            commands::set_caption_style,
+            commands::correct_caption_word
         ])
         .run(tauri::generate_context!())
         .expect("error while running cruxvid");
