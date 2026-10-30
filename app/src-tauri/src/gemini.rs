@@ -88,6 +88,11 @@ impl GeminiClient {
         self.generate(vec![json!({ "text": format!("{ANALYZE_PROMPT}\n{}", transcript.as_prompt_text()) })])
     }
 
+    /// One text-only prompt, JSON answer.
+    pub fn generate_json<T: DeserializeOwned>(&self, prompt: &str) -> Result<T, String> {
+        self.generate(vec![json!({ "text": prompt })])
+    }
+
     fn generate<T: DeserializeOwned>(&self, parts: Vec<Value>) -> Result<T, String> {
         let url = format!("{}/v1beta/models/{}:generateContent", self.base_url, self.model);
         let body = json!({

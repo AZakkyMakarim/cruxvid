@@ -165,6 +165,16 @@ impl Engine {
         export::export_clip_with(&media, &view, &self.output.get(), Some(&vf), Some(&ass))
     }
 
+    /// Manual title/description edit, saved in the Project.
+    pub fn edit_clip_text(&self, project_id: &str, clip_id: &str, title: &str, description: &str) -> Result<clips::Clip, String> {
+        crate::clip_text::edit(&self.store, project_id, clip_id, title, description)
+    }
+
+    /// New AI text for one field of one Clip; on error the old text stays.
+    pub fn regenerate_clip_text(&self, project_id: &str, clip_id: &str, field: crate::clip_text::TextField) -> Result<clips::Clip, String> {
+        crate::clip_text::regenerate(&self.store, &self.client()?, project_id, clip_id, field)
+    }
+
     pub fn output_dir(&self) -> PathBuf {
         self.output.get()
     }

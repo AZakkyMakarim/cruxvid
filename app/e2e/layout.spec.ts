@@ -47,6 +47,7 @@ test('one-face Clip: Fokus first, switch to split person + game, drag the crop, 
 
       // Drag the webcam pane (top third of the 9:16 canvas) a little.
       rev = await redraws(canvas);
+      await canvas.scrollIntoViewIfNeeded(); // raw mouse events do not scroll; the canvas may sit below the fold
       const box = (await canvas.boundingBox())!;
       await page.mouse.move(box.x + box.width / 2, box.y + box.height * 0.1);
       await page.mouse.down();

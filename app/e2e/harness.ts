@@ -26,14 +26,18 @@ export async function startFakeGemini(): Promise<{ url: string; close: () => voi
     let body = '';
     req.on('data', (c) => (body += c));
     req.on('end', () => {
-      const file = body.includes('CRUXVID_TASK: transcribe') ? 'gemini_transcribe_response.json' : 'gemini_analyze_response.json';
+      const file = body.includes('CRUXVID_TASK: transcribe')
+        ? 'gemini_transcribe_response.json'
+        : body.includes('CRUXVID_TASK: describe')
+          ? 'gemini_describe_response.json'
+          : 'gemini_analyze_response.json';
       res.setHeader('Content-Type', 'application/json');
       res.end(readFileSync(path.join(FIXTURES, file)));
     });
   });
   await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));
   const { port } = server.address() as { port: number };
-  return { url: `http://127.0.0.1:${port}`, close: () => server.close() };
+  return { url: `http://127.0.0.1:${port}`, close: () => (server.closeAllConnections(), server.close()) };
 }
 
 /** Launch the real app with WebView2 remote debugging on, attach Playwright over CDP, run `fn`, always clean up. */
