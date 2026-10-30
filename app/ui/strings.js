@@ -32,6 +32,13 @@ Object.assign(strings, {
   modelSaved: 'Model saved.',
   keyTitle: 'Gemini API key needed',
   keyHelp: 'AI analysis uses your own Gemini API key. It is stored in the Windows Credential Manager.',
+  layout: 'Layout',
+  layoutPresets: { focus: 'Focus', stack: 'Split top-bottom', webcam_game: 'Split person + game', full: 'Full' },
+  layoutNotices: {
+    no_face: 'No face found in this Clip, using Full layout.',
+    multiple_faces: 'Several faces found, using Full layout. Pick a Layout to change it.',
+  },
+  layoutHint: 'Drag a pane to move its crop, or focus it and use the arrow keys.',
   keySave: 'Save key',
   keyCancel: 'Cancel',
   keyChange: 'Change key',

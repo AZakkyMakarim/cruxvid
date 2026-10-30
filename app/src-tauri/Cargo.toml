@@ -21,6 +21,9 @@ base64 = "0.22"
 # OS credential store (Windows Credential Manager) for the Gemini API key.
 keyring = { version = "3", features = ["windows-native"] }
 
+# Layout face detection (YuNet). Statically linked ONNX Runtime, no DLL to ship.
+ort = { version = "=2.0.0-rc.15", default-features = false, features = ["std", "download-binaries", "tls-native", "api-24"] }
+
 [dev-dependencies]
 jsonschema = { version = "0.30", default-features = false }
 tempfile = "3"

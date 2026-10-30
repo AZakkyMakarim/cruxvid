@@ -1,6 +1,6 @@
 //! Engine: the public seam (Analyze, Export). Orchestrates the concern modules; holds no UI knowledge.
 
-use crate::{caption::{self, CaptionStore, CaptionStyle, ClipCaption}, clips, export, gemini::{self, GeminiClient}, project::{Project, ProjectStore}, settings::{self, KeyStore}, source};
+use crate::{caption::{self, CaptionStore, CaptionStyle, ClipCaption}, clips, export, faces, gemini::{self, GeminiClient}, layout::Layout, layout_store::{self, LayoutStore}, project::{Project, ProjectStore}, settings::{self, KeyStore}, source};
 use serde::Serialize;
 use std::{path::{Path, PathBuf}, sync::{Arc, Mutex}, time::Duration};
 
@@ -35,6 +35,7 @@ pub struct Engine {
     data_dir: PathBuf,
     store: ProjectStore,
     captions: CaptionStore,
+    layouts: LayoutStore,
     output_dir: PathBuf,
 }
 
@@ -55,6 +56,7 @@ impl Engine {
             timeout: gemini::DEFAULT_TIMEOUT,
             store: ProjectStore::new(cfg.data_dir.clone()),
             captions: CaptionStore::new(cfg.data_dir.clone()),
+            layouts: LayoutStore::new(cfg.data_dir.clone()),
             data_dir: cfg.data_dir,
             output_dir: cfg.output_dir,
         }
@@ -135,8 +137,9 @@ impl Engine {
     pub fn export(&self, project_id: &str, clip_id: &str) -> Result<PathBuf, String> {
         let p = self.store.load(project_id)?;
         let clip = p.clips.iter().find(|c| c.id == clip_id).ok_or_else(|| format!("Clip not found: {clip_id}"))?;
+        let vf = self.clip_layout(project_id, clip_id)?.filter(export::export_fps(p.source.fps));
         let ass = caption::ass(clip, &self.captions.load(project_id).view(&p.transcript, clip));
-        export::export_clip_with(&p.source, clip, &self.output_dir, Some(&ass))
+        export::export_clip_with(&p.source, clip, &self.output_dir, Some(&vf), Some(&ass))
     }
 
     pub fn caption_presets() -> Vec<CaptionStyle> {
@@ -165,5 +168,40 @@ impl Engine {
         let shown = state.correct(&p.transcript, index, text)?;
         self.captions.save(project_id, &state)?;
         Ok(shown)
+    }
+
+    /// The Clip's Layout. First call detects faces in the Clip and picks the initial preset; the result is saved.
+    pub fn clip_layout(&self, project_id: &str, clip_id: &str) -> Result<Layout, String> {
+        let p = self.store.load(project_id)?;
+        let clip = p.clips.iter().find(|c| c.id == clip_id).ok_or_else(|| format!("Clip not found: {clip_id}"))?;
+        if let Some(l) = self.layouts.get(project_id, clip_id)? {
+            return Ok(l);
+        }
+        let found = faces::detect_clip_faces(&p.source, clip.start, clip.end)?;
+        let layout = Layout::auto(&found, p.source.width, p.source.height);
+        self.layouts.put(project_id, clip_id, &layout)?;
+        Ok(layout)
+    }
+
+    /// Another preset for the Clip; no new detection, no render.
+    pub fn set_layout_preset(&self, project_id: &str, clip_id: &str, preset: &str) -> Result<Layout, String> {
+        let layout = self.clip_layout(project_id, clip_id)?.with_preset(preset)?;
+        self.layouts.put(project_id, clip_id, &layout)?;
+        Ok(layout)
+    }
+
+    /// Manual crop adjustment: moves one pane's crop window (Source-relative units).
+    pub fn shift_layout_pane(&self, project_id: &str, clip_id: &str, pane: usize, dx: f64, dy: f64) -> Result<Layout, String> {
+        let mut layout = self.clip_layout(project_id, clip_id)?;
+        layout.shift_pane(pane, dx, dy)?;
+        self.layouts.put(project_id, clip_id, &layout)?;
+        Ok(layout)
+    }
+
+    /// JPEG from the middle of the Clip for the Layout preview.
+    pub fn clip_frame(&self, project_id: &str, clip_id: &str) -> Result<Vec<u8>, String> {
+        let p = self.store.load(project_id)?;
+        let clip = p.clips.iter().find(|c| c.id == clip_id).ok_or_else(|| format!("Clip not found: {clip_id}"))?;
+        layout_store::preview_jpeg(&p.source, (clip.start + clip.end) / 2.0)
     }
 }

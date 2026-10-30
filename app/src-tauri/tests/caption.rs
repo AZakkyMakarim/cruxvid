@@ -92,7 +92,7 @@ fn export_burns_caption_with_highlight_and_the_corrected_word() {
     e.correct_caption_word(&p.id, first.index, "ZULU").unwrap();
     let after = e.export(&p.id, &clip.id).unwrap(); // same file name: overwrites
     let after_frame = frame(&after, t);
-    let band = mean_abs_diff(&before_frame, &after_frame, 1000, 1800);
+    let band = mean_abs_diff(&before_frame, &after_frame, 1200, 1500);
     let control = mean_abs_diff(&before_frame, &after_frame, 100, 500);
     assert!(band > control + 2.0, "corrected word not visible: band {band} control {control}");
 }

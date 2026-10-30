@@ -1,5 +1,6 @@
 // Clip list: one row per Clip (time range, title, Hook score) with an Export button.
 import { exportClip } from './api.js';
+import { attachLayoutButton } from './layout-editor.js';
 import { strings } from './strings.js';
 
 const pad = (n) => String(n).padStart(2, '0');
@@ -48,6 +49,7 @@ export function renderClips(project) {
       btn,
       result,
     );
+    attachLayoutButton(li, project, clip);
     list.append(li);
   }
   if (!project.clips.length) {

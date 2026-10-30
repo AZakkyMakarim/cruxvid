@@ -5,17 +5,18 @@ use crate::{clips::Clip, source::Source, tools};
 use std::path::{Path, PathBuf};
 
 pub fn export_clip(source: &Source, clip: &Clip, out_dir: &Path) -> Result<PathBuf, String> {
-    export_clip_with(source, clip, out_dir, None)
+    export_clip_with(source, clip, out_dir, None, None)
 }
 
-/// `ass`: optional ASS file content burned into the video (Caption).
-pub fn export_clip_with(source: &Source, clip: &Clip, out_dir: &Path, ass: Option<&str>) -> Result<PathBuf, String> {
+/// `layout_vf`: ffmpeg graph from the Clip's Layout (see `layout::Layout::filter`); None = centre crop.
+/// `ass`: optional ASS file content burned into the 1080x1920 result (Caption).
+pub fn export_clip_with(source: &Source, clip: &Clip, out_dir: &Path, layout_vf: Option<&str>, ass: Option<&str>) -> Result<PathBuf, String> {
     std::fs::create_dir_all(out_dir).map_err(|e| format!("Cannot create output folder: {e}"))?;
     let out = out_dir.join(file_name(&source.title, clip));
     let part = out.with_extension("part");
     let fps = export_fps(source.fps);
     let ass_file = std::env::temp_dir().join(format!("cruxvid-{}-{}.ass", std::process::id(), clip.id));
-    let mut vf = format!("scale=-2:1920,crop=1080:1920,fps={fps}");
+    let mut vf = format!("{},fps={fps}", layout_vf.unwrap_or("scale=-2:1920,crop=1080:1920"));
     if let Some(ass) = ass {
         std::fs::write(&ass_file, ass).map_err(|e| format!("Cannot write caption file: {e}"))?;
         vf.push_str(&ass_filter(&ass_file));
@@ -47,7 +48,7 @@ fn ass_filter(file: &Path) -> String {
 }
 
 /// Follows the Source frame rate, snapped to 30 or 60.
-fn export_fps(source_fps: f64) -> u32 {
+pub(crate) fn export_fps(source_fps: f64) -> u32 {
     if source_fps > 45.0 { 60 } else { 30 }
 }
 

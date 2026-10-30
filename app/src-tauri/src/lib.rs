@@ -6,7 +6,10 @@ mod commands;
 pub mod config;
 pub mod engine;
 pub mod export;
+pub mod faces;
 pub mod gemini;
+pub mod layout;
+pub mod layout_store;
 pub mod project;
 pub mod settings;
 pub mod source;
@@ -52,7 +55,12 @@ pub fn run() {
             commands::caption_presets,
             commands::get_caption,
             commands::set_caption_style,
-            commands::correct_caption_word
+            commands::correct_caption_word,
+            commands::layout_presets,
+            commands::get_layout,
+            commands::set_layout_preset,
+            commands::shift_layout_pane,
+            commands::get_clip_frame
         ])
         .run(tauri::generate_context!())
         .expect("error while running cruxvid");
