@@ -35,6 +35,9 @@ pub struct AppConfig {
     /// are not about keys just work; set empty -> no key (first-use dialog). Never read outside test mode.
     #[serde(skip)]
     pub test_api_key: Option<String>,
+    /// Test-mode only: the yt-dlp executable to run for links (a fake one in tests).
+    #[serde(skip)]
+    pub ytdlp_path: Option<PathBuf>,
 }
 
 impl AppConfig {
@@ -49,6 +52,7 @@ impl AppConfig {
             output_dir: None,
             gemini_timeout_ms: None,
             test_api_key: None,
+            ytdlp_path: None,
         };
         if test_mode {
             if let Some(url) = env("CRUXVID_GEMINI_BASE_URL").filter(|u| !u.is_empty()) {
@@ -60,6 +64,7 @@ impl AppConfig {
             cfg.data_dir = env("CRUXVID_DATA_DIR").filter(|v| !v.is_empty()).map(PathBuf::from);
             cfg.output_dir = env("CRUXVID_OUTPUT_DIR").filter(|v| !v.is_empty()).map(PathBuf::from);
             cfg.gemini_timeout_ms = env("CRUXVID_GEMINI_TIMEOUT_MS").and_then(|v| v.parse().ok());
+            cfg.ytdlp_path = env("CRUXVID_YTDLP").filter(|v| !v.is_empty()).map(PathBuf::from);
             cfg.test_api_key = Some(env("CRUXVID_TEST_API_KEY").unwrap_or_else(|| "test-key".into()));
         }
         cfg
@@ -143,6 +148,14 @@ mod tests {
         let on = cfg(&on_vars);
         assert_eq!((on.gemini_timeout_ms, on.test_api_key.as_deref()), (Some(250), Some("")));
         assert_eq!(cfg(&[("CRUXVID_TEST_MODE", "1")]).test_api_key.as_deref(), Some("test-key"));
+    }
+
+    #[test]
+    fn ytdlp_override_only_in_test_mode() {
+        let off = cfg(&[("CRUXVID_YTDLP", "D:/fake/yt-dlp.exe")]);
+        assert_eq!(off.ytdlp_path, None);
+        let on = cfg(&[("CRUXVID_TEST_MODE", "1"), ("CRUXVID_YTDLP", "D:/fake/yt-dlp.exe")]);
+        assert_eq!(on.ytdlp_path, Some(PathBuf::from("D:/fake/yt-dlp.exe")));
     }
 
     #[test]

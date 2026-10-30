@@ -15,7 +15,9 @@ pub fn export_clip_with(source: &Source, clip: &Clip, out_dir: &Path, layout_vf:
     let out = out_dir.join(file_name(&source.title, clip));
     let part = out.with_extension("part");
     let fps = export_fps(source.fps);
-    let ass_file = std::env::temp_dir().join(format!("cruxvid-{}-{}.ass", std::process::id(), clip.id));
+    // Unique per call: two exports of the same Clip id (other Projects, parallel tests) must not share a file.
+    static SEQ: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+    let ass_file = std::env::temp_dir().join(format!("cruxvid-{}-{}-{}.ass", std::process::id(), clip.id, SEQ.fetch_add(1, std::sync::atomic::Ordering::Relaxed)));
     let mut vf = format!("{},fps={fps}", layout_vf.unwrap_or("scale=-2:1920,crop=1080:1920"));
     if let Some(ass) = ass {
         std::fs::write(&ass_file, ass).map_err(|e| format!("Cannot write caption file: {e}"))?;

@@ -92,3 +92,6 @@ strings.openFolder = 'Open folder';
 strings.outputSaved = (p) => `Output folder: ${p}`;
 strings.folderOpened = (p) => `Opened ${p}`;
 
+
+// Source from a link (cruxvid-b2t.8).
+strings.pathPlaceholder = 'Path to a local video file, or a YouTube / Twitch / video link';

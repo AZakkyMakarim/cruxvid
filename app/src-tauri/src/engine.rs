@@ -1,6 +1,6 @@
 //! Engine: the public seam (Analyze, Export). Orchestrates the concern modules; holds no UI knowledge.
 
-use crate::{caption::{self, CaptionStore, CaptionStyle, ClipCaption}, clips, export, faces, gemini::{self, GeminiClient}, layout::Layout, layout_store::{self, LayoutStore}, project::{Project, ProjectStore}, settings::{self, KeyStore}, source};
+use crate::{caption::{self, CaptionStore, CaptionStyle, ClipCaption}, clips, export, faces, gemini::{self, GeminiClient}, layout::Layout, layout_store::{self, LayoutStore}, project::{Project, ProjectStore}, settings::{self, KeyStore}, source, ytdlp};
 use crate::{output_folder::OutputFolder, queue::{Job, JobQueue}};
 use serde::Serialize;
 use std::{path::{Path, PathBuf}, sync::{Arc, Mutex}, time::Duration};
@@ -27,6 +27,11 @@ pub struct TokenEstimate {
     pub total: u64,
 }
 
+fn default_ytdlp(data_dir: &Path) -> PathBuf {
+    let own = data_dir.join("bin").join("yt-dlp.exe");
+    if own.is_file() { own } else { PathBuf::from("yt-dlp") }
+}
+
 pub struct Engine {
     gemini_base_url: String,
     model: Mutex<String>,
@@ -39,6 +44,9 @@ pub struct Engine {
     layouts: LayoutStore,
     output: OutputFolder,
     queue: JobQueue,
+    ytdlp: ytdlp::YtDlp,
+    /// Two threads asking for the same Clip's cut must not download it twice at once.
+    cut_lock: Mutex<()>,
     /// Test mode: Clips whose next queued Export fails once (see `fail_once`).
     fail_once: Mutex<Vec<String>>,
 }
@@ -63,6 +71,8 @@ impl Engine {
             captions: CaptionStore::new(cfg.data_dir.clone()),
             layouts: LayoutStore::new(cfg.data_dir.clone()),
             queue: JobQueue::new(cfg.data_dir.clone()),
+            ytdlp: ytdlp::YtDlp::new(default_ytdlp(&cfg.data_dir), cfg.data_dir.join("ytdlp-update.txt")),
+            cut_lock: Mutex::new(()),
             data_dir: cfg.data_dir,
             output,
             fail_once: Mutex::new(Vec::new()),
@@ -71,6 +81,12 @@ impl Engine {
 
     pub fn with_timeout(mut self, timeout: Duration) -> Self {
         self.timeout = timeout;
+        self
+    }
+
+    /// Which yt-dlp executable to run for link Sources (default: `<data dir>/bin/yt-dlp.exe`, else `yt-dlp` on PATH).
+    pub fn with_ytdlp(mut self, bin: PathBuf) -> Self {
+        self.ytdlp = self.ytdlp.with_bin(bin);
         self
     }
 
@@ -105,7 +121,8 @@ impl Engine {
     /// Transcript comes back as word-level JSON (~40 tokens/s of speech) and is re-sent as text for the
     /// Topic pass (~5 tokens/s). shortcut: fixed rates, real use depends on speech density.
     pub fn estimate_tokens(&self, path: &Path) -> Result<TokenEstimate, String> {
-        let duration = source::probe_local(path)?.duration;
+        let link = path.to_string_lossy();
+        let duration = if ytdlp::is_link(&link) { self.ytdlp.info(link.trim())?.duration } else { source::probe_local(path)?.duration };
         let input = (duration * (32.0 + 5.0)).ceil() as u64;
         let output = (duration * 40.0).ceil() as u64;
         Ok(TokenEstimate { duration, input, output, total: input + output })
@@ -122,9 +139,7 @@ impl Engine {
 
     /// Source file -> Transcript -> Clips, saved as a Project. Errors are user-readable.
     pub fn analyze(&self, path: &Path) -> Result<Project, String> {
-        let source = source::probe_local(path)?;
-        let gemini = self.client()?;
-        let transcript = gemini.transcribe(&source)?;
+        let (source, transcript, gemini) = self.source_and_transcript(path)?;
         let analysis = gemini.analyze(&transcript)?;
         let project = Project {
             id: ProjectStore::new_id(),
@@ -144,9 +159,10 @@ impl Engine {
     pub fn export(&self, project_id: &str, clip_id: &str) -> Result<PathBuf, String> {
         let p = self.store.load(project_id)?;
         let clip = p.clips.iter().find(|c| c.id == clip_id).ok_or_else(|| format!("Clip not found: {clip_id}"))?;
-        let vf = self.clip_layout(project_id, clip_id)?.filter(export::export_fps(p.source.fps));
+        let (media, view) = self.clip_media(project_id, &p, clip)?;
+        let vf = self.clip_layout(project_id, clip_id)?.filter(export::export_fps(media.fps));
         let ass = caption::ass(clip, &self.captions.load(project_id).view(&p.transcript, clip));
-        export::export_clip_with(&p.source, clip, &self.output.get(), Some(&vf), Some(&ass))
+        export::export_clip_with(&media, &view, &self.output.get(), Some(&vf), Some(&ass))
     }
 
     pub fn output_dir(&self) -> PathBuf {
@@ -235,8 +251,9 @@ impl Engine {
         if let Some(l) = self.layouts.get(project_id, clip_id)? {
             return Ok(l);
         }
-        let found = faces::detect_clip_faces(&p.source, clip.start, clip.end)?;
-        let layout = Layout::auto(&found, p.source.width, p.source.height);
+        let (media, view) = self.clip_media(project_id, &p, clip)?;
+        let found = faces::detect_clip_faces(&media, view.start, view.end)?;
+        let layout = Layout::auto(&found, media.width, media.height);
         self.layouts.put(project_id, clip_id, &layout)?;
         Ok(layout)
     }
@@ -260,6 +277,40 @@ impl Engine {
     pub fn clip_frame(&self, project_id: &str, clip_id: &str) -> Result<Vec<u8>, String> {
         let p = self.store.load(project_id)?;
         let clip = p.clips.iter().find(|c| c.id == clip_id).ok_or_else(|| format!("Clip not found: {clip_id}"))?;
-        layout_store::preview_jpeg(&p.source, (clip.start + clip.end) / 2.0)
+        let (media, view) = self.clip_media(project_id, &p, clip)?;
+        layout_store::preview_jpeg(&media, (view.start + view.end) / 2.0)
+    }
+
+    /// The Source (a local file) and Clip times to render from. A link Source is stream-cut to just the
+    /// Clip's range first, so the returned Clip's times are relative to that cut file (docs/spikes/b2t-1-stream-cut.md).
+    fn clip_media(&self, project_id: &str, p: &Project, clip: &clips::Clip) -> Result<(source::Source, clips::Clip), String> {
+        if !ytdlp::is_link(&p.source.path) {
+            return Ok((p.source.clone(), clip.clone()));
+        }
+        let _one_cut_at_a_time = self.cut_lock.lock().unwrap();
+        let name = format!("{}_{}_{}", clip.id, (clip.start * 1000.0).round(), (clip.end * 1000.0).round());
+        let dir = self.data_dir.join("cuts").join(project_id);
+        let cut = self.ytdlp.cut(&p.source.path, clip.start, clip.end, p.source.duration, &dir, &name)?;
+        let mut media = source::probe_local(&cut.path)?;
+        media.title = p.source.title.clone();
+        let view = clips::Clip { start: cut.offset, end: cut.offset + (clip.end - clip.start), ..clip.clone() };
+        Ok((media, view))
+    }
+
+    /// Link Source: metadata, then platform captions, else the audio through Gemini.
+    fn source_and_transcript(&self, input: &Path) -> Result<(source::Source, crate::transcript::Transcript, GeminiClient), String> {
+        let link = input.to_string_lossy();
+        if !ytdlp::is_link(&link) {
+            let source = source::probe_local(input)?;
+            let gemini = self.client()?;
+            let transcript = gemini.transcribe(&source)?;
+            return Ok((source, transcript, gemini));
+        }
+        let gemini = self.client()?;
+        let work = self.data_dir.join("work").join(ProjectStore::new_id());
+        let resolved = self.ytdlp.resolve(link.trim(), &work, |audio| gemini.transcribe(audio));
+        let _ = std::fs::remove_dir_all(&work);
+        let (source, transcript) = resolved?;
+        Ok((source, transcript, gemini))
     }
 }
