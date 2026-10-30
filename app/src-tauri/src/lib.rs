@@ -2,6 +2,8 @@ mod ai_commands;
 pub mod arrange;
 pub mod audio;
 pub mod caption;
+pub mod clip_text;
+mod clip_text_commands;
 pub mod clips;
 mod commands;
 pub mod config;
@@ -81,7 +83,9 @@ pub fn run() {
             export_queue_commands::get_output_dir,
             export_queue_commands::set_output_dir,
             export_queue_commands::open_output_dir,
-            arrange::arrange_clips
+            arrange::arrange_clips,
+            clip_text_commands::edit_clip_text,
+            clip_text_commands::regenerate_clip_text
         ])
         .run(tauri::generate_context!())
         .expect("error while running cruxvid");

@@ -1,0 +1,4 @@
+CRUXVID_TASK: describe
+Write a "title" (short, under 80 characters, no quotes) and a "description" (one to three sentences) for the video clip whose transcript follows.
+Write both in the language given on the "Language:" line (ISO 639-1), and describe only what the transcript says.
+Return JSON only, matching shared/schema/describe.schema.json.

@@ -95,3 +95,10 @@ strings.folderOpened = (p) => `Opened ${p}`;
 
 // Source from a link (cruxvid-b2t.8).
 strings.pathPlaceholder = 'Path to a local video file, or a YouTube / Twitch / video link';
+
+// Clip title and description.
+strings.clipTitle = 'Title';
+strings.clipDescription = 'Description';
+strings.regenerate = 'Regenerate';
+strings.save = 'Save';
+strings.clipTextSaved = 'Saved.';

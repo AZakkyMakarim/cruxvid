@@ -45,3 +45,7 @@ export const getOutputDir = () => invoke('get_output_dir');
 export const setOutputDir = (dir) => invoke('set_output_dir', { dir });
 export const openOutputDir = () => invoke('open_output_dir');
 export const pickFolder = () => window.__TAURI__.dialog.open({ directory: true, multiple: false });
+
+// Clip title/description (cruxvid-b2t.10)
+export const editClipText = (projectId, clipId, title, description) => invoke('edit_clip_text', { projectId, clipId, title, description });
+export const regenerateClipText = (projectId, clipId, field) => invoke('regenerate_clip_text', { projectId, clipId, field });

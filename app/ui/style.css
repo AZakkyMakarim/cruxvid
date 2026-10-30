@@ -30,3 +30,8 @@ body { font-family: system-ui, sans-serif; margin: 1rem 1.5rem; }
 .queue-job { display: flex; gap: 1rem; padding: .2rem 0; }
 .queue-status[data-status="failed"], .queue-error { color: #b00020; }
 #output-dir { width: 28rem; max-width: 100%; }
+
+.clip-text { display: grid; gap: .3rem; max-width: 40rem; margin: .4rem 0; }
+.clip-text-field { display: flex; gap: .4rem; align-items: start; }
+.clip-title-input, .clip-desc-input { flex: 1; }
+.clip-text-status[data-error="true"] { color: #b00020; }
