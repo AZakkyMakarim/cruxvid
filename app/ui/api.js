@@ -54,3 +54,6 @@ export const regenerateClipText = (projectId, clipId, field) => invoke('regenera
 export const getLayoutAt = (projectId, clipId, t) => invoke('get_layout_at', { projectId, clipId, t });
 export const getClipFrameAt = async (projectId, clipId, t) =>
   createImageBitmap(new Blob([await invoke('get_clip_frame_at', { projectId, clipId, t })], { type: 'image/jpeg' }));
+// Project history (cruxvid-b2t.16)
+export const listProjects = () => invoke('list_projects');
+export const openProject = (id) => invoke('open_project', { id });

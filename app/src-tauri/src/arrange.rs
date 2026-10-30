@@ -8,7 +8,7 @@ use tauri::State;
 
 pub const DEFAULT_THRESHOLD: u8 = 50;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum ClipOrder {
     Timeline,
@@ -33,7 +33,9 @@ pub fn arrange(clips: &[Clip], order: ClipOrder, threshold: u8) -> Vec<ArrangedC
 
 #[tauri::command]
 pub fn arrange_clips(engine: State<'_, Arc<Engine>>, project_id: String, order: ClipOrder, threshold: u8) -> Result<Vec<ArrangedClip>, String> {
-    Ok(arrange(&engine.load_project(&project_id)?.clips, order, threshold))
+    let arranged = arrange(&engine.load_project(&project_id)?.clips, order, threshold);
+    crate::history::save_view(&engine, &project_id, order, threshold)?;
+    Ok(arranged)
 }
 
 #[cfg(test)]

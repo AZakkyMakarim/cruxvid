@@ -38,3 +38,8 @@ body { font-family: system-ui, sans-serif; margin: 1rem 1.5rem; }
 .speaker-scrub-label { display: block; margin: .25rem 0; }
 .speaker-scrub { width: 270px; vertical-align: middle; }
 .speaker-scrub-label[hidden] { display: none; }
+
+#history-panel { margin-top: 1rem; }
+#history-list { list-style: none; padding: 0; }
+.history-item { display: flex; gap: 1rem; padding: .2rem 0; }
+#history-error { color: #b00020; }

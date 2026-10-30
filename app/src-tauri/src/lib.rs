@@ -11,6 +11,7 @@ pub mod engine;
 pub mod export;
 pub mod faces;
 pub mod gemini;
+pub mod history;
 mod export_queue_commands;
 pub mod layout;
 pub mod layout_store;
@@ -89,7 +90,9 @@ pub fn run() {
             clip_text_commands::edit_clip_text,
             clip_text_commands::regenerate_clip_text,
             speaker_commands::get_layout_at,
-            speaker_commands::get_clip_frame_at
+            speaker_commands::get_clip_frame_at,
+            history::list_projects,
+            history::open_project
         ])
         .run(tauri::generate_context!())
         .expect("error while running cruxvid");

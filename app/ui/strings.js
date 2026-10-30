@@ -106,3 +106,6 @@ strings.clipTextSaved = 'Saved.';
 // Speaker follow (cruxvid-b2t.14).
 strings.layoutNotices.follow_speaker = 'Following whoever speaks. Pick another Layout to change it.';
 strings.speakerScrub = 'Preview time (s)';
+// Project history.
+strings.history = 'Projects';
+strings.historyOpen = 'Open';
