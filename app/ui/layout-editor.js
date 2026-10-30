@@ -2,6 +2,7 @@
 // The preview draws the panes from one still frame, so changing Layout never renders video.
 // All geometry comes from the Rust engine (shared/layout rules); this file only draws and forwards shifts.
 import { getClipFrame, getLayout, layoutPresets, setLayoutPreset, shiftLayoutPane } from './api.js';
+import { createSpeakerScrub } from './speaker-scrub.js';
 import { strings } from './strings.js';
 
 const CANVAS = { w: 1080, h: 1920 };
@@ -35,12 +36,12 @@ export function attachLayoutButton(li, project, clip) {
     editor = document.createElement('div');
     editor.className = 'layout-editor';
     li.append(editor);
-    mountEditor(editor, project.id, clip.id);
+    mountEditor(editor, project.id, clip.id, clip.end - clip.start);
   });
   li.append(btn);
 }
 
-async function mountEditor(root, projectId, clipId) {
+async function mountEditor(root, projectId, clipId, duration) {
   const bar = document.createElement('div');
   bar.className = 'layout-presets';
   const notice = document.createElement('p');
@@ -59,9 +60,13 @@ async function mountEditor(root, projectId, clipId) {
   let layout;
   let frame;
   let active = 0; // pane the keyboard moves
+  const scrub = createSpeakerScrub(root, canvas, { projectId, clipId, duration, draw: (f, l) => drawLayout(canvas, f, l) });
   const show = (l) => {
     layout = l;
+    scrub.sync(l);
     canvas.dataset.preset = l.preset;
+    canvas.dataset.cropx = l.panes[0].crop.x.toFixed(4);
+    canvas.dataset.t = '0';
     canvas.dataset.rev = String(Number(canvas.dataset.rev ?? 0) + 1); // lets tests wait for a redraw
     for (const b of bar.children) b.setAttribute('aria-pressed', String(b.dataset.preset === l.preset));
     notice.textContent = l.notice ? strings.layoutNotices[l.notice] : '';

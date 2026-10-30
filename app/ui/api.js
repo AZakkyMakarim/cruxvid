@@ -49,3 +49,8 @@ export const pickFolder = () => window.__TAURI__.dialog.open({ directory: true, 
 // Clip title/description (cruxvid-b2t.10)
 export const editClipText = (projectId, clipId, title, description) => invoke('edit_clip_text', { projectId, clipId, title, description });
 export const regenerateClipText = (projectId, clipId, field) => invoke('regenerate_clip_text', { projectId, clipId, field });
+
+// Speaker follow (cruxvid-b2t.14).
+export const getLayoutAt = (projectId, clipId, t) => invoke('get_layout_at', { projectId, clipId, t });
+export const getClipFrameAt = async (projectId, clipId, t) =>
+  createImageBitmap(new Blob([await invoke('get_clip_frame_at', { projectId, clipId, t })], { type: 'image/jpeg' }));

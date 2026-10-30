@@ -30,7 +30,9 @@ export async function startFakeGemini(): Promise<{ url: string; close: () => voi
         ? 'gemini_transcribe_response.json'
         : body.includes('CRUXVID_TASK: describe')
           ? 'gemini_describe_response.json'
-          : 'gemini_analyze_response.json';
+          : body.includes('CRUXVID_TASK: speakers')
+            ? 'gemini_speakers_response.json'
+            : 'gemini_analyze_response.json';
       res.setHeader('Content-Type', 'application/json');
       res.end(readFileSync(path.join(FIXTURES, file)));
     });

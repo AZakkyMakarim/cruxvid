@@ -93,7 +93,7 @@ impl GeminiClient {
         self.generate(vec![json!({ "text": prompt })])
     }
 
-    fn generate<T: DeserializeOwned>(&self, parts: Vec<Value>) -> Result<T, String> {
+    pub(crate) fn generate<T: DeserializeOwned>(&self, parts: Vec<Value>) -> Result<T, String> {
         let url = format!("{}/v1beta/models/{}:generateContent", self.base_url, self.model);
         let body = json!({
             "contents": [{ "parts": parts }],

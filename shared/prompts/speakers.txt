@@ -1,0 +1,6 @@
+CRUXVID_TASK: speakers
+Watch and listen to the video below and list who speaks when. Return JSON only, matching shared/schema/speakers.schema.json:
+{"turns": [{"start": <seconds>, "end": <seconds>, "position": <0..1 or null>}]}
+One entry per uninterrupted stretch of one speaker, in time order; timestamps are seconds from the start of this video.
+"position" is the horizontal centre of the speaking person's face as a fraction of the frame width (0 = left edge, 1 = right edge).
+Use null when the speaker is not visible in the frame (off camera) or you cannot tell who is speaking. Never guess.

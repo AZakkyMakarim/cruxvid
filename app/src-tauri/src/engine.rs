@@ -1,6 +1,6 @@
 //! Engine: the public seam (Analyze, Export). Orchestrates the concern modules; holds no UI knowledge.
 
-use crate::{caption::{self, CaptionStore, CaptionStyle, ClipCaption}, clips, export, faces, gemini::{self, GeminiClient}, layout::Layout, layout_store::{self, LayoutStore}, project::{Project, ProjectStore}, settings::{self, KeyStore}, source, ytdlp};
+use crate::{caption::{self, CaptionStore, CaptionStyle, ClipCaption}, clips, export, faces, gemini::{self, GeminiClient}, layout::Layout, layout_store::{self, LayoutStore}, project::{Project, ProjectStore}, settings::{self, KeyStore}, source, speaker, ytdlp};
 use crate::{output_folder::OutputFolder, queue::{Job, JobQueue}};
 use serde::Serialize;
 use std::{path::{Path, PathBuf}, sync::{Arc, Mutex}, time::Duration};
@@ -263,9 +263,32 @@ impl Engine {
         }
         let (media, view) = self.clip_media(project_id, &p, clip)?;
         let found = faces::detect_clip_faces(&media, view.start, view.end)?;
-        let layout = Layout::auto(&found, media.width, media.height);
-        self.layouts.put(project_id, clip_id, &layout)?;
+        if found.len() < 2 {
+            let layout = Layout::auto(&found, media.width, media.height);
+            self.layouts.put(project_id, clip_id, &layout)?;
+            return Ok(layout);
+        }
+        // 2+ faces: follow whoever speaks. No key, no network or no placeable turn = Full + notice, which is
+        // not saved (it is not a user choice), so the next open asks again.
+        let keys = self.client().and_then(|g| speaker::detect_turns(&g, &media, &view)).map(|t| speaker::follow_keys(&found, &t)).unwrap_or_default();
+        let layout = Layout::auto_following(&found, keys, media.width, media.height);
+        if !layout.follow.is_empty() {
+            self.layouts.put(project_id, clip_id, &layout)?;
+        }
         Ok(layout)
+    }
+
+    /// The Clip's Layout as it looks `t` seconds into the Clip (the followed crop moves with the speaker).
+    pub fn clip_layout_at(&self, project_id: &str, clip_id: &str, t: f64) -> Result<Layout, String> {
+        Ok(self.clip_layout(project_id, clip_id)?.at(t))
+    }
+
+    /// JPEG of the Source `t` seconds into the Clip, for scrubbing the Layout preview.
+    pub fn clip_frame_at(&self, project_id: &str, clip_id: &str, t: f64) -> Result<Vec<u8>, String> {
+        let p = self.store.load(project_id)?;
+        let clip = p.clips.iter().find(|c| c.id == clip_id).ok_or_else(|| format!("Clip not found: {clip_id}"))?;
+        let (media, view) = self.clip_media(project_id, &p, clip)?;
+        layout_store::preview_jpeg(&media, view.start + t.clamp(0.0, view.end - view.start))
     }
 
     /// Another preset for the Clip; no new detection, no render.
