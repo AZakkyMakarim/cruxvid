@@ -1,5 +1,6 @@
 import { initAiSettings } from './ai-settings.js';
 import { initCaptionPanel } from './caption-panel.js';
+import { initClipArrange } from './clip-arrange.js';
 import { renderClips } from './clip-list.js';
 import { initDiagnostics } from './diagnostics.js';
 import { initOutputPanel } from './output-panel.js';
@@ -12,6 +13,7 @@ for (const el of document.querySelectorAll('[data-i18n]')) el.textContent = stri
 initSourcePanel({
   onProject: (project) => {
     renderClips(project);
+    initClipArrange(project);
     initCaptionPanel(project);
     initQueuePanel(project);
   },
