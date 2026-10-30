@@ -5,11 +5,12 @@
 use crate::{
     caption::{CaptionStore, CaptionWord, ClipCaption},
     clips::Clip,
+    fsutil,
     gemini::GeminiClient,
-    project::ProjectStore,
+    project::{Project, ProjectStore},
 };
 use serde::{Deserialize, Serialize};
-use std::{collections::BTreeMap, path::PathBuf};
+use std::{collections::BTreeMap, path::PathBuf, sync::Mutex};
 
 const TRANSLATE_PROMPT: &str = include_str!("../../../shared/prompts/translate.txt");
 
@@ -68,9 +69,24 @@ impl TranslationStore {
             .unwrap_or_default()
     }
 
-    fn save(&self, project_id: &str, t: &Translations) -> Result<(), String> {
-        let json = serde_json::to_vec_pretty(t).map_err(|e| e.to_string())?;
-        std::fs::write(self.root.join(project_id).join("translations.json"), json).map_err(|e| format!("Cannot save translation: {e}"))
+    /// Read-modify-write of translations.json under one lock; a damaged file is an error, never replaced by an empty one.
+    fn update<T>(&self, project_id: &str, f: impl FnOnce(&mut Translations) -> Result<T, String>) -> Result<T, String> {
+        static LOCK: Mutex<()> = Mutex::new(());
+        let _g = fsutil::lock(&LOCK);
+        let file = self.root.join(project_id).join("translations.json");
+        let mut all: Translations = fsutil::read_json(&file, "translation")?;
+        let out = f(&mut all)?;
+        fsutil::write_json(&file, &all, "translation")?;
+        Ok(out)
+    }
+
+    /// Forgets the Clip's translation (its words are timed for a range the Clip no longer has). The Clip's title and
+    /// description are left as they are: they may have been edited since.
+    pub fn drop_clip(&self, project_id: &str, clip_id: &str) -> Result<(), String> {
+        self.update(project_id, |all| {
+            all.0.remove(clip_id);
+            Ok(())
+        })
     }
 }
 
@@ -111,7 +127,8 @@ pub fn overlay(mut cap: ClipCaption, t: Option<&Translation>) -> ClipCaption {
 }
 
 /// Sets the language of one Clip's Caption, title and description. "" restores the originals.
-/// Gemini is asked before anything is written, so a failure leaves the Clip as it was.
+/// Gemini is asked before anything is written, so a failure leaves the Clip as it was. The Gemini call runs on a
+/// snapshot; the result is applied to the Project as it is afterwards, so edits made meanwhile are kept.
 pub fn set_language(
     projects: &ProjectStore,
     store: &TranslationStore,
@@ -121,35 +138,44 @@ pub fn set_language(
     clip_id: &str,
     language: &str,
 ) -> Result<Clip, String> {
-    let mut p = projects.load(project_id)?;
-    let mut all = store.load(project_id);
-    let i = p.clips.iter().position(|c| c.id == clip_id).ok_or_else(|| format!("Clip not found: {clip_id}"))?;
+    let find = |p: &Project| p.clips.iter().position(|c| c.id == clip_id).ok_or_else(|| format!("Clip not found: {clip_id}"));
     if language.trim().is_empty() {
-        if let Some(t) = all.0.remove(clip_id) {
-            p.clips[i].title = t.original_title;
-            p.clips[i].description = t.original_description;
-        }
-    } else {
-        let language = clean_language(language)?;
-        let clip = &p.clips[i];
-        // Always translate from the originals, never from an earlier translation.
-        let (title, description) = all.get(clip_id).map_or((clip.title.clone(), clip.description.clone()), |t| (t.original_title.clone(), t.original_description.clone()));
-        let source = captions.load(project_id).view(&p.transcript, clip);
-        let caption: Vec<&str> = source.words.iter().map(|w| w.text.as_str()).collect();
-        let ask = format!("{TRANSLATE_PROMPT}\nLanguage: {language}\nCaption:\n{}\nTitle:\n{title}\nDescription:\n{description}\n", caption.join(" "));
-        let new: Translated = gemini()?.generate_json(&ask)?;
-        let words = retime(&new.text, &source.words);
-        if new.title.trim().is_empty() || (words.is_empty() && !source.words.is_empty()) {
-            return Err("Terjemahan dari Gemini kosong. Coba lagi.".into());
-        }
-        let clip = &mut p.clips[i];
-        clip.title = new.title.trim().to_string();
-        clip.description = new.description.trim().to_string();
-        all.0.insert(clip_id.into(), Translation { language, original_title: title, original_description: description, words });
+        return projects.update(project_id, |p| {
+            let i = find(p)?;
+            if let Some(t) = store.update(project_id, |all| Ok(all.0.remove(clip_id)))? {
+                p.clips[i].title = t.original_title;
+                p.clips[i].description = t.original_description;
+            }
+            Ok(p.clips[i].clone())
+        });
     }
-    store.save(project_id, &all)?;
-    projects.save(&p)?;
-    Ok(p.clips[i].clone())
+    let language = clean_language(language)?;
+    let snapshot = projects.load(project_id)?;
+    let clip = &snapshot.clips[find(&snapshot)?];
+    // Always translate from the originals, never from an earlier translation.
+    let (title, description) = store.load(project_id).get(clip_id).map_or((clip.title.clone(), clip.description.clone()), |t| (t.original_title.clone(), t.original_description.clone()));
+    let source = captions.load(project_id).view(&snapshot.transcript, clip);
+    let caption: Vec<&str> = source.words.iter().map(|w| w.text.as_str()).collect();
+    let ask = format!("{TRANSLATE_PROMPT}\nLanguage: {language}\nCaption:\n{}\nTitle:\n{title}\nDescription:\n{description}\n", caption.join(" "));
+    let new: Translated = gemini()?.generate_json(&ask)?;
+    let words = retime(&new.text, &source.words);
+    if new.title.trim().is_empty() || (words.is_empty() && !source.words.is_empty()) {
+        return Err("Terjemahan dari Gemini kosong. Coba lagi.".into());
+    }
+    let range = (clip.start, clip.end);
+    projects.update(project_id, |p| {
+        let i = find(p)?;
+        if (p.clips[i].start, p.clips[i].end) != range {
+            return Err("Rentang Clip diubah saat diterjemahkan. Terjemahkan lagi.".into());
+        }
+        store.update(project_id, |all| {
+            all.0.insert(clip_id.into(), Translation { language, original_title: title, original_description: description, words });
+            Ok(())
+        })?;
+        p.clips[i].title = new.title.trim().to_string();
+        p.clips[i].description = new.description.trim().to_string();
+        Ok(p.clips[i].clone())
+    })
 }
 
 #[cfg(test)]

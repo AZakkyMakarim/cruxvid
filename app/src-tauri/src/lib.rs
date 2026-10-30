@@ -12,6 +12,7 @@ pub mod config;
 pub mod engine;
 pub mod export;
 pub mod faces;
+pub mod fsutil;
 pub mod gemini;
 pub mod history;
 mod export_queue_commands;

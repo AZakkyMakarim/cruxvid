@@ -107,6 +107,24 @@ fn layout_edits_survive_reopening_the_project() {
 }
 
 #[test]
+fn trimming_drops_a_detected_layout_but_keeps_one_the_user_chose() {
+    let tmp = tempfile::tempdir().unwrap();
+    let e = engine(tmp.path(), &FakeGemini::start());
+    let p = e.analyze(&fixtures().join("face.mp4")).unwrap();
+    let (a, b) = (&p.clips[0], &p.clips[1]);
+    let store = cruxvid_lib::layout_store::LayoutStore::new(e.data_dir().to_path_buf());
+    e.clip_layout(&p.id, &a.id).unwrap(); // detected, saved
+    e.set_layout_preset(&p.id, &b.id, "stack").unwrap(); // chosen by the user
+    assert!(store.get(&p.id, &a.id).unwrap().is_some());
+
+    cruxvid_lib::clip_range::set_range(&e, &p.id, &a.id, a.start, a.end - 1.0).unwrap();
+    cruxvid_lib::clip_range::set_range(&e, &p.id, &b.id, b.start, b.end - 1.0).unwrap();
+
+    assert_eq!(store.get(&p.id, &a.id).unwrap(), None, "detected on the old range: detect again");
+    assert_eq!(store.get(&p.id, &b.id).unwrap().unwrap().preset, "stack");
+}
+
+#[test]
 fn preview_frame_is_a_jpeg_of_the_clip() {
     let tmp = tempfile::tempdir().unwrap();
     let e = engine(tmp.path(), &FakeGemini::start());

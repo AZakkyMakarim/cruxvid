@@ -206,6 +206,34 @@ fn extraction_that_stays_broken_gives_a_clear_error_after_one_retry() {
 }
 
 #[test]
+fn a_private_video_is_reported_at_once_without_an_update_or_a_retry() {
+    let tmp = tempfile::tempdir().unwrap();
+    mark_updated_today(tmp.path());
+    let fake = Fake::new(tmp.path(), json!({ "private": true }));
+    let e = engine(tmp.path(), &FakeGemini::start(), &fake);
+
+    let err = e.analyze(Path::new(URL)).unwrap_err();
+
+    assert!(err.contains("Private video"), "{err}");
+    assert_eq!(fake.calls().len(), 1, "no -U, no second try: {:?}", fake.calls());
+}
+
+#[test]
+fn an_update_that_hangs_is_killed_and_the_original_error_is_reported() {
+    let tmp = tempfile::tempdir().unwrap();
+    mark_updated_today(tmp.path());
+    let fake = Fake::new(tmp.path(), json!({ "always_broken": true, "update_hangs": true }));
+    let e = engine(tmp.path(), &FakeGemini::start(), &fake).with_ytdlp_update_timeout(std::time::Duration::from_millis(500));
+
+    let started = std::time::Instant::now();
+    let err = e.analyze(Path::new(URL)).unwrap_err();
+
+    assert!(started.elapsed().as_secs() < 15, "-U was not cut short: {:?}", started.elapsed());
+    assert!(err.contains("Unable to extract player response"), "{err}");
+    assert_eq!(fake.count("-U"), 1);
+}
+
+#[test]
 fn a_missing_yt_dlp_is_explained() {
     let tmp = tempfile::tempdir().unwrap();
     let fake = Fake::new(tmp.path(), json!({}));

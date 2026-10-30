@@ -9,6 +9,7 @@ use crate::{
     project::{Project, ProjectStore},
     source::{self, Source},
     transcript::Transcript,
+    translate::TranslationStore,
 };
 use serde::Serialize;
 use std::path::Path;
@@ -84,48 +85,55 @@ pub fn new_manual_project(engine: &Engine, path: &Path) -> Result<Project, Strin
 /// Adds a Clip for `start`-`end` of the Source. Clips stay numbered in timeline order.
 pub fn add_manual_clip(engine: &Engine, project_id: &str, start: f64, end: f64) -> Result<Added, String> {
     let store = store(engine);
-    let mut p = store.load(project_id)?;
-    check(&p.source, start, end)?;
-    let mut n = p.clips.len() + 1;
-    while p.clips.iter().any(|c| c.id == format!("manual-{n}")) {
-        n += 1;
-    }
-    let clip_id = format!("manual-{n}");
-    p.clips.push(Clip {
-        id: clip_id.clone(),
-        number: 0,
-        start,
-        end,
-        title: format!("Clip {n}"),
-        description: String::new(),
-        // The user chose this range, so it must not vanish under the Hook score threshold.
-        hook_score: 100,
-        hook_reason: "Manual Clip".into(),
-    });
-    p.clips.sort_by(|a, b| a.start.total_cmp(&b.start));
-    for (i, c) in p.clips.iter_mut().enumerate() {
-        c.number = i as u32 + 1;
-    }
-    store.save(&p)?;
-    Ok(Added { project: p, clip_id, warning: warning(start, end) })
+    store.update(project_id, |p| {
+        check(&p.source, start, end)?;
+        let mut n = p.clips.len() + 1;
+        while p.clips.iter().any(|c| c.id == format!("manual-{n}")) {
+            n += 1;
+        }
+        let clip_id = format!("manual-{n}");
+        p.clips.push(Clip {
+            id: clip_id.clone(),
+            number: 0,
+            start,
+            end,
+            title: format!("Clip {n}"),
+            description: String::new(),
+            // The user chose this range, so it must not vanish under the Hook score threshold.
+            hook_score: 100,
+            hook_reason: "Manual Clip".into(),
+        });
+        p.clips.sort_by(|a, b| a.start.total_cmp(&b.start));
+        for (i, c) in p.clips.iter_mut().enumerate() {
+            c.number = i as u32 + 1;
+        }
+        Ok(Added { project: p.clone(), clip_id, warning: warning(start, end) })
+    })
 }
 
-/// Changes a Clip's start and end. Its Layout's speaker follow keys move with the start so they stay on the same words.
-/// shortcut: the crop itself is not re-detected for newly included footage, use Layout presets to redo it.
+/// Changes a Clip's start and end. What was made for the old range is dropped so it is made again for the new one:
+/// the Clip's translation (its words are timed for the old range) and a Layout that was detected rather than chosen.
+/// A Layout the user chose is kept; its speaker follow keys move with the start so they stay on the same words.
+/// shortcut: a kept Layout's crop is not re-detected for newly included footage, use Layout presets to redo it.
 pub fn set_range(engine: &Engine, project_id: &str, clip_id: &str, start: f64, end: f64) -> Result<RangeEdit, String> {
     let store = store(engine);
-    let mut p = store.load(project_id)?;
-    check(&p.source, start, end)?;
-    let clip = p.clips.iter_mut().find(|c| c.id == clip_id).ok_or_else(|| format!("Clip not found: {clip_id}"))?;
-    let shift = clip.start - start;
-    (clip.start, clip.end) = (start, end);
-    let clip = clip.clone();
-    store.save(&p)?;
-    let layouts = LayoutStore::new(engine.data_dir().to_path_buf());
-    if let Ok(Some(mut layout)) = layouts.get(project_id, clip_id) {
-        if !layout.follow.is_empty() && shift != 0.0 {
-            layout.follow.iter_mut().for_each(|k| k.t = (k.t + shift).max(0.0));
-            layouts.put(project_id, clip_id, &layout)?;
+    let (clip, shift, changed) = store.update(project_id, |p| {
+        check(&p.source, start, end)?;
+        let clip = p.clips.iter_mut().find(|c| c.id == clip_id).ok_or_else(|| format!("Clip not found: {clip_id}"))?;
+        let (old_start, old_end) = (clip.start, clip.end);
+        (clip.start, clip.end) = (start, end);
+        Ok((clip.clone(), old_start - start, (old_start, old_end) != (start, end)))
+    })?;
+    if changed {
+        TranslationStore::new(engine.data_dir().to_path_buf()).drop_clip(project_id, clip_id)?;
+        let layouts = LayoutStore::new(engine.data_dir().to_path_buf());
+        if let Some(mut layout) = layouts.get(project_id, clip_id)? {
+            if !layout.user {
+                layouts.remove(project_id, clip_id)?;
+            } else if !layout.follow.is_empty() && shift != 0.0 {
+                layout.follow.iter_mut().for_each(|k| k.t = (k.t + shift).max(0.0));
+                layouts.put(project_id, clip_id, &layout)?;
+            }
         }
     }
     Ok(RangeEdit { warning: warning(start, end), clip })

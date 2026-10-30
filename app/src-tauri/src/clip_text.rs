@@ -40,29 +40,29 @@ pub fn edit(store: &ProjectStore, project_id: &str, clip_id: &str, title: &str, 
     if title.is_empty() {
         return Err("Title tidak boleh kosong.".into());
     }
-    let mut p = store.load(project_id)?;
-    let clip = clip_mut(&mut p, clip_id)?;
-    clip.title = title.to_string();
-    clip.description = description.trim().to_string();
-    let clip = clip.clone();
-    store.save(&p)?;
-    Ok(clip)
+    store.update(project_id, |p| {
+        let clip = clip_mut(p, clip_id)?;
+        clip.title = title.to_string();
+        clip.description = description.trim().to_string();
+        Ok(clip.clone())
+    })
 }
 
 /// Asks Gemini for new text and replaces `field` of this Clip only. On any error nothing is saved.
 /// `translated`: the Clip's Caption language when it was translated; the text is written in it.
 pub fn regenerate(store: &ProjectStore, gemini: &GeminiClient, project_id: &str, clip_id: &str, field: TextField, translated: Option<&str>) -> Result<Clip, String> {
-    let mut p = store.load(project_id)?;
+    let p = store.load(project_id)?;
     let ask = prompt(&p.transcript, p.clips.iter().find(|c| c.id == clip_id).ok_or_else(|| format!("Clip not found: {clip_id}"))?, translated);
+    drop(p); // the call below takes seconds: write into the Project as it is then, not as it was now
     let new: Described = gemini.generate_json(&ask)?;
-    let clip = clip_mut(&mut p, clip_id)?;
-    match field {
-        TextField::Title => clip.title = new.title.trim().to_string(),
-        TextField::Description => clip.description = new.description.trim().to_string(),
-    }
-    let clip = clip.clone();
-    store.save(&p)?;
-    Ok(clip)
+    store.update(project_id, |p| {
+        let clip = clip_mut(p, clip_id)?;
+        match field {
+            TextField::Title => clip.title = new.title.trim().to_string(),
+            TextField::Description => clip.description = new.description.trim().to_string(),
+        }
+        Ok(clip.clone())
+    })
 }
 
 #[cfg(test)]

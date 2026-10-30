@@ -5,7 +5,7 @@ use std::sync::Arc;
 use tauri::State;
 
 /// Runs the queue on its own thread; the UI polls `export_jobs`.
-/// shortcut: a job enqueued in the instant the worker finishes waits for the next click, fix with a worker-loop recheck if it shows up.
+/// The worker re-checks for waiting jobs before it lets go (queue.rs), so a job enqueued meanwhile is not left behind.
 fn start(engine: &Arc<Engine>, project_id: String) {
     let e = engine.clone();
     std::thread::spawn(move || {

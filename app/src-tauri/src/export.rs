@@ -12,7 +12,7 @@ pub fn export_clip(source: &Source, clip: &Clip, out_dir: &Path) -> Result<PathB
 /// `ass`: optional ASS file content burned into the 1080x1920 result (Caption).
 pub fn export_clip_with(source: &Source, clip: &Clip, out_dir: &Path, layout_vf: Option<&str>, ass: Option<&str>) -> Result<PathBuf, String> {
     std::fs::create_dir_all(out_dir).map_err(|e| format!("Cannot create output folder: {e}"))?;
-    let out = out_dir.join(file_name(&source.title, clip));
+    let out = reserve(out_dir, &file_name(&source.title, clip))?;
     let part = out.with_extension("part");
     let fps = export_fps(source.fps);
     // Unique per call: two exports of the same Clip id (other Projects, parallel tests) must not share a file.
@@ -33,13 +33,32 @@ pub fn export_clip_with(source: &Source, clip: &Clip, out_dir: &Path, layout_vf:
         .arg(&part)
         .output();
     let _ = std::fs::remove_file(&ass_file);
-    let result = result.map_err(|e| format!("Cannot run ffmpeg (is it installed?): {e}"))?;
-    if !result.status.success() {
+    let result = result.map_err(|e| format!("Cannot run ffmpeg (is it installed?): {e}"));
+    let saved = match result {
+        Ok(r) if r.status.success() => std::fs::rename(&part, &out).map_err(|e| format!("Cannot save export: {e}")),
+        Ok(r) => Err(format!("Export failed: {}", String::from_utf8_lossy(&r.stderr).trim())),
+        Err(e) => Err(e),
+    };
+    if saved.is_err() {
         let _ = std::fs::remove_file(&part);
-        return Err(format!("Export failed: {}", String::from_utf8_lossy(&result.stderr).trim()));
+        let _ = std::fs::remove_file(&out); // the empty placeholder `reserve` made
     }
-    std::fs::rename(&part, &out).map_err(|e| format!("Cannot save export: {e}"))?;
-    Ok(out)
+    saved.map(|()| out)
+}
+
+/// Claims a file name that does not exist yet by creating it empty: `name`, else `name (2)`, `name (3)`...
+/// An export never overwrites another Clip's file (same source title and clip number in another Project).
+fn reserve(dir: &Path, name: &str) -> Result<PathBuf, String> {
+    let stem = name.strip_suffix(".mp4").unwrap_or(name);
+    for n in 1u32.. {
+        let path = dir.join(if n == 1 { name.to_string() } else { format!("{stem} ({n}).mp4") });
+        match std::fs::OpenOptions::new().write(true).create_new(true).open(&path) {
+            Ok(_) => return Ok(path),
+            Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {}
+            Err(e) => return Err(format!("Cannot create the export file: {e}")),
+        }
+    }
+    unreachable!()
 }
 
 /// `,ass=...` filter with ffmpeg filtergraph escaping; fonts come from the Windows folder so the look is deterministic.
@@ -54,13 +73,19 @@ pub(crate) fn export_fps(source_fps: f64) -> u32 {
     if source_fps > 45.0 { 60 } else { 30 }
 }
 
-/// `<source title>_<NN>_<clip title>.mp4` with characters Windows forbids replaced.
+/// `<source title>_<NN>_<clip title>.mp4` with characters Windows forbids replaced. `reserve` keeps the name unique.
 fn file_name(source_title: &str, clip: &Clip) -> String {
-    let clean = |s: &str| -> String {
-        let s: String = s.chars().map(|c| if c.is_control() || "<>:\"/\\|?*".contains(c) { '_' } else { c }).collect();
-        s.trim().trim_end_matches('.').chars().take(80).collect()
-    };
-    format!("{}_{:02}_{}.mp4", clean(source_title), clip.number, clean(&clip.title))
+    format!("{}_{:02}_{}.mp4", clean_part(source_title), clip.number, clean_part(&clip.title))
+}
+
+/// One part of a file name: no forbidden characters, no leading/trailing dots or spaces, not a Windows device name.
+fn clean_part(s: &str) -> String {
+    let s: String = s.chars().map(|c| if c.is_control() || "<>:\"/\\|?*".contains(c) { '_' } else { c }).take(80).collect();
+    let s = s.trim_matches(|c| c == ' ' || c == '.');
+    let device = s.split('.').next().unwrap_or("").to_ascii_uppercase();
+    let reserved = matches!(device.as_str(), "CON" | "PRN" | "AUX" | "NUL")
+        || (device.len() == 4 && (device.starts_with("COM") || device.starts_with("LPT")) && device.ends_with(|c: char| c.is_ascii_digit() && c != '0'));
+    if reserved { format!("_{s}") } else { s.to_string() }
 }
 
 #[cfg(test)]
@@ -74,6 +99,20 @@ mod tests {
     #[test]
     fn file_name_is_source_number_title_and_windows_safe() {
         assert_eq!(file_name("My Podcast", &clip("Why: a/b?")), "My Podcast_03_Why_ a_b_.mp4");
+    }
+
+    #[test]
+    fn name_parts_are_not_windows_device_names_nor_end_in_dots_or_spaces() {
+        for (given, shown) in [("CON", "_CON"), ("nul.txt", "_nul.txt"), ("Com1", "_Com1"), ("LPT9", "_LPT9"), ("COM0", "COM0"), ("CONSOLE", "CONSOLE"), ("Title. . ", "Title"), ("  ..x", "x")] {
+            assert_eq!(clean_part(given), shown, "{given:?}");
+        }
+    }
+
+    #[test]
+    fn a_taken_name_gets_a_number_instead_of_being_overwritten() {
+        let dir = tempfile::tempdir().unwrap();
+        let names: Vec<_> = (0..3).map(|_| reserve(dir.path(), "a_01_b.mp4").unwrap().file_name().unwrap().to_string_lossy().into_owned()).collect();
+        assert_eq!(names, ["a_01_b.mp4", "a_01_b (2).mp4", "a_01_b (3).mp4"]);
     }
 
     #[test]

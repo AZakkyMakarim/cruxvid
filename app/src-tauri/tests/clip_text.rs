@@ -71,3 +71,23 @@ fn regenerate_without_network_reports_an_error_and_keeps_the_old_text() {
     assert!(err.contains("Jaringan"), "{err}");
     assert_eq!(dead.load_project(&before.id).unwrap(), before);
 }
+
+#[test]
+fn an_edit_and_a_trim_made_while_regenerate_waits_for_gemini_are_kept() {
+    let tmp = tempfile::tempdir().unwrap();
+    let before = engine(tmp.path(), &FakeGemini::start().base_url).analyze(&fixtures().join("source.mp4")).unwrap();
+    let slow = std::sync::Arc::new(engine(tmp.path(), &FakeGemini::start_slow(std::time::Duration::from_millis(1500)).base_url));
+    let first = before.clips[0].clone();
+
+    let worker = {
+        let (e, pid, id) = (slow.clone(), before.id.clone(), first.id.clone());
+        std::thread::spawn(move || e.regenerate_clip_text(&pid, &id, TextField::Description).unwrap())
+    };
+    std::thread::sleep(std::time::Duration::from_millis(500));
+    slow.edit_clip_text(&before.id, &first.id, "Edited meanwhile", "x").unwrap();
+    cruxvid_lib::clip_range::set_range(&slow, &before.id, &first.id, first.start + 1.0, first.end).unwrap();
+    worker.join().unwrap();
+
+    let c = &slow.load_project(&before.id).unwrap().clips[0];
+    assert_eq!((c.title.as_str(), c.description.as_str(), c.start), ("Edited meanwhile", "Regenerated description for the clip.", first.start + 1.0));
+}

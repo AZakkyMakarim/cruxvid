@@ -49,6 +49,9 @@ pub struct Layout {
     /// Manual correction of the followed crop, Source-relative, added to every key.
     #[serde(default)]
     pub follow_dx: f64,
+    /// The user picked the preset or moved a crop. A detected Layout (false) is dropped when the Clip's range changes.
+    #[serde(default)]
+    pub user: bool,
 }
 
 #[derive(Deserialize)]
@@ -126,6 +129,7 @@ fn build(preset: &str, faces: u32, face: Option<Rect>, notice: Option<&str>, sw:
         src_h: sh,
         follow: Vec::new(),
         follow_dx: 0.0,
+        user: false,
     })
 }
 

@@ -6,7 +6,8 @@
 use crate::{source::Source, tools, transcript::Transcript, vtt};
 use serde_json::Value;
 use std::path::{Path, PathBuf};
-use std::process::Output;
+use std::process::{Output, Stdio};
+use std::time::{Duration, Instant};
 
 pub const MSG_LIVE: &str = "Siaran ini masih live. Tunggu sampai siarannya selesai, lalu tempel link rekamannya.";
 
@@ -15,6 +16,7 @@ pub const MSG_LIVE: &str = "Siaran ini masih live. Tunggu sampai siarannya seles
 const FORMAT: &str = "bv*[height<=1080][protocol=https]+ba[protocol=https]/bv*[height<=1080]+ba/b[height<=1080]/b";
 const FFMPEG_RANGED: &str = "ffmpeg_i:-multiple_requests 1 -request_size 2000000";
 const DAY_SECS: u64 = 24 * 60 * 60;
+const UPDATE_TIMEOUT: Duration = Duration::from_secs(60);
 const PAD_SECS: f64 = 10.0;
 /// Allowed difference between the wanted and the real length of a cut.
 const CUT_TOLERANCE: f64 = 1.0;
@@ -79,11 +81,18 @@ pub struct YtDlp {
     bin: PathBuf,
     /// Holds the unix time of the last update attempt.
     stamp: PathBuf,
+    /// `yt-dlp -U` is killed after this long (a stalled network must not hang an analysis or export).
+    update_timeout: Duration,
 }
 
 impl YtDlp {
     pub fn new(bin: PathBuf, stamp: PathBuf) -> Self {
-        Self { bin, stamp }
+        Self { bin, stamp, update_timeout: UPDATE_TIMEOUT }
+    }
+
+    pub fn with_update_timeout(mut self, timeout: Duration) -> Self {
+        self.update_timeout = timeout;
+        self
     }
 
     pub fn with_bin(mut self, bin: PathBuf) -> Self {
@@ -98,9 +107,21 @@ impl YtDlp {
             .map_err(|e| format!("yt-dlp tidak bisa dijalankan ({}): {e}. Pasang yt-dlp atau taruh yt-dlp.exe di folder data Cruxvid.", self.bin.display()))
     }
 
-    /// `yt-dlp -U`; true when it succeeded.
+    /// `yt-dlp -U`; true when it succeeded in time.
     fn update(&self) -> bool {
-        self.run(&["-U"]).is_ok_and(|o| o.status.success())
+        let Ok(mut child) = tools::command(&self.bin.to_string_lossy()).arg("-U").stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null()).spawn() else { return false };
+        let deadline = Instant::now() + self.update_timeout;
+        loop {
+            match child.try_wait() {
+                Ok(Some(status)) => return status.success(),
+                Ok(None) if Instant::now() < deadline => std::thread::sleep(Duration::from_millis(50)),
+                _ => {
+                    let _ = child.kill();
+                    let _ = child.wait();
+                    return false;
+                }
+            }
+        }
     }
 
     /// Updates at most once a day (an attempt counts, so an offline machine is not retried every call).
@@ -116,14 +137,15 @@ impl YtDlp {
         }
     }
 
-    /// Runs yt-dlp; when it fails, updates it (whatever the daily limit) and tries once more.
+    /// Runs yt-dlp; when it fails in a way an older version explains, updates it (whatever the daily limit) and tries
+    /// once more. A private, removed or live video fails the same way after an update, so those are reported at once.
     fn run_retry(&self, args: &[&str]) -> Result<Output, String> {
         self.daily_update();
         let first = self.run(args)?;
         if first.status.success() {
             return Ok(first);
         }
-        if self.update() {
+        if version_related(&first) && self.update() {
             let second = self.run(args)?;
             if second.status.success() {
                 return Ok(second);
@@ -224,6 +246,12 @@ fn unix_now() -> u64 {
 
 fn update_due(last: Option<u64>, now: u64) -> bool {
     last.is_none_or(|l| now.saturating_sub(l) >= DAY_SECS)
+}
+
+/// Failures an update can fix: the site changed (extraction, signatures) or rejects an old client (HTTP 400/403).
+fn version_related(o: &Output) -> bool {
+    let err = String::from_utf8_lossy(&o.stderr).to_lowercase();
+    ["unable to extract", "please report this issue", "signature", "nsig", "player response", "http error 400", "http error 403", "update yt-dlp"].iter().any(|s| err.contains(s))
 }
 
 /// The most useful line of yt-dlp's complaint, in a user-readable sentence.
@@ -328,6 +356,16 @@ mod tests {
         assert!(!cut_json_ok(j(v, "90.0").as_bytes(), 90.0), "no audio (spike finding 4)");
         assert!(!cut_json_ok(j(a, "90.0").as_bytes(), 90.0));
         assert!(!cut_json_ok(b"garbage", 90.0));
+    }
+
+    #[test]
+    fn only_failures_an_update_can_fix_are_version_related() {
+        let out = |e: &str| Output { status: std::process::ExitStatus::default(), stdout: vec![], stderr: e.as_bytes().to_vec() };
+        assert!(version_related(&out("ERROR: [youtube] abc: Unable to extract player response; please report this issue")));
+        assert!(version_related(&out("ERROR: unable to download video data: HTTP Error 403: Forbidden")));
+        for no in ["ERROR: [youtube] abc: Private video. Sign in if you've been granted access", "ERROR: Video unavailable. This video has been removed", "ERROR: HTTP Error 404: Not Found", "ERROR: This live event will begin in 2 hours"] {
+            assert!(!version_related(&out(no)), "{no}");
+        }
     }
 
     #[test]

@@ -148,9 +148,15 @@ impl CaptionStore {
             .unwrap_or_default()
     }
 
-    pub fn save(&self, project_id: &str, state: &CaptionState) -> Result<(), String> {
-        let json = serde_json::to_vec_pretty(state).map_err(|e| e.to_string())?;
-        std::fs::write(self.root.join(project_id).join("captions.json"), json).map_err(|e| format!("Cannot save caption: {e}"))
+    /// Read-modify-write of captions.json under one lock; a damaged file is an error, never replaced by an empty one.
+    pub fn update<T>(&self, project_id: &str, f: impl FnOnce(&mut CaptionState) -> Result<T, String>) -> Result<T, String> {
+        static LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+        let _g = crate::fsutil::lock(&LOCK);
+        let file = self.root.join(project_id).join("captions.json");
+        let mut state: CaptionState = crate::fsutil::read_json(&file, "caption")?;
+        let out = f(&mut state)?;
+        crate::fsutil::write_json(&file, &state, "caption")?;
+        Ok(out)
     }
 }
 
