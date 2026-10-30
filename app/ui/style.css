@@ -7,3 +7,10 @@ body { font-family: system-ui, sans-serif; margin: 1rem 1.5rem; }
 .clip-score { font-weight: 600; }
 .clip-title { flex: 1; }
 #diagnostics { margin-top: 2rem; font-size: .8rem; opacity: .7; }
+
+#caption-panel { margin-top: 1rem; }
+.caption-field { display: inline-flex; gap: .4rem; align-items: center; margin: 0 1rem .4rem 0; }
+#caption-preview { width: 270px; height: 480px; overflow: hidden; position: relative; background: #556; margin: .5rem 0; }
+.caption-frame { width: 1080px; height: 1920px; position: relative; transform-origin: top left; }
+.caption-line { position: absolute; left: 60px; right: 60px; text-align: center; font-weight: 700; paint-order: stroke fill; white-space: nowrap; }
+#caption-words { display: flex; flex-wrap: wrap; gap: .25rem; max-height: 12rem; overflow: auto; }

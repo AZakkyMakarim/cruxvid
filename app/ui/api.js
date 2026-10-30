@@ -11,3 +11,8 @@ export const pickVideo = () =>
     multiple: false,
     filters: [{ name: 'Video', extensions: ['mp4', 'mkv', 'mov', 'webm', 'avi', 'ts', 'flv'] }],
   });
+
+export const captionPresets = () => invoke('caption_presets');
+export const getCaption = (projectId, clipId) => invoke('get_caption', { projectId, clipId });
+export const setCaptionStyle = (projectId, clipId, style) => invoke('set_caption_style', { projectId, clipId, style });
+export const correctCaptionWord = (projectId, index, text) => invoke('correct_caption_word', { projectId, index, text });
