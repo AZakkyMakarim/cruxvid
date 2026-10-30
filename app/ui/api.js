@@ -34,6 +34,9 @@ export const getCaption = (projectId, clipId) => invoke('get_caption', { project
 export const setCaptionStyle = (projectId, clipId, style) => invoke('set_caption_style', { projectId, clipId, style });
 export const correctCaptionWord = (projectId, index, text) => invoke('correct_caption_word', { projectId, index, text });
 
+// Clip order and threshold (cruxvid-b2t.9)
+export const arrangeClips = (projectId, order, threshold) => invoke('arrange_clips', { projectId, order, threshold });
+
 // Export queue and output folder.
 export const exportClips = (projectId, clipIds) => invoke('export_clips', { projectId, clipIds });
 export const retryFailedExports = (projectId) => invoke('retry_failed_exports', { projectId });

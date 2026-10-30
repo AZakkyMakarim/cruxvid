@@ -128,7 +128,7 @@ impl Engine {
         let analysis = gemini.analyze(&transcript)?;
         let project = Project {
             id: ProjectStore::new_id(),
-            clips: clips::build_clips(&analysis.sections),
+            clips: clips::build_clips(&analysis.sections, &transcript),
             source,
             transcript,
         };

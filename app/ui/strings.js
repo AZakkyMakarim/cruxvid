@@ -75,6 +75,11 @@ Object.assign(strings, {
 });
 
 
+// Clip order and threshold.
+strings.clipOrder = 'Order';
+strings.clipOrders = { timeline: 'Timeline', hook: 'Hook score' };
+strings.clipThreshold = 'Minimum Hook score';
+
 // Export queue and output folder.
 strings.queue = 'Export queue';
 strings.queueExportSelected = 'Export selected';

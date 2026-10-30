@@ -21,6 +21,13 @@
 
   <section id="clips-panel">
     <h2 data-i18n="clips"></h2>
+    <p id="clip-controls">
+      <label id="clip-order-label" for="clip-order"></label>
+      <select id="clip-order"></select>
+      <label id="clip-threshold-label" for="clip-threshold"></label>
+      <input id="clip-threshold" type="range" min="0" max="100" step="1" value="50">
+      <output id="clip-threshold-value" for="clip-threshold">50</output>
+    </p>
     <ul id="clip-list"></ul>
   </section>
 

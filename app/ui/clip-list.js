@@ -26,6 +26,7 @@ export function renderClips(project) {
   for (const clip of project.clips) {
     const li = document.createElement('li');
     li.className = 'clip';
+    li.dataset.clipId = clip.id;
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'export-btn';
@@ -46,6 +47,7 @@ export function renderClips(project) {
       cell('clip-range', `${formatTime(clip.start)} - ${formatTime(clip.end)}`),
       cell('clip-title', clip.title),
       cell('clip-score', String(clip.hook_score)),
+      cell('clip-reason', clip.hook_reason),
       btn,
       result,
     );

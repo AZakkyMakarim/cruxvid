@@ -43,6 +43,11 @@ pub struct Section {
     pub hook_score: u8,
     #[serde(default)]
     pub hook_reason: String,
+    /// For a content section over 120 s: its most complete 60-120 s sub-range.
+    #[serde(default)]
+    pub best_start: Option<f64>,
+    #[serde(default)]
+    pub best_end: Option<f64>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
