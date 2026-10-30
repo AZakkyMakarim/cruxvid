@@ -14,3 +14,9 @@ body { font-family: system-ui, sans-serif; margin: 1rem 1.5rem; }
 .caption-frame { width: 1080px; height: 1920px; position: relative; transform-origin: top left; }
 .caption-line { position: absolute; left: 60px; right: 60px; text-align: center; font-weight: 700; paint-order: stroke fill; white-space: nowrap; }
 #caption-words { display: flex; flex-wrap: wrap; gap: .25rem; max-height: 12rem; overflow: auto; }
+
+#queue-panel, #output-panel { margin-top: 1rem; }
+#queue-picks, #queue-jobs { list-style: none; padding: 0; }
+.queue-job { display: flex; gap: 1rem; padding: .2rem 0; }
+.queue-status[data-status="failed"], .queue-error { color: #b00020; }
+#output-dir { width: 28rem; max-width: 100%; }

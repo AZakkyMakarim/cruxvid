@@ -24,3 +24,15 @@ strings.captionHighlight = 'Highlight';
 strings.captionOutline = 'Outline';
 strings.captionPosition = 'Position';
 strings.captionWords = 'Words (edit to correct; empty restores the original)';
+
+// Export queue and output folder.
+strings.queue = 'Export queue';
+strings.queueExportSelected = 'Export selected';
+strings.queueRetryFailed = 'Retry failed';
+strings.queueStatus = { waiting: 'Waiting', running: 'Running', done: 'Done', failed: 'Failed' };
+strings.outputFolder = 'Output folder';
+strings.outputBrowse = 'Browse...';
+strings.outputSave = 'Save';
+strings.openFolder = 'Open folder';
+strings.outputSaved = (p) => `Output folder: ${p}`;
+strings.folderOpened = (p) => `Opened ${p}`;

@@ -23,6 +23,24 @@
     <ul id="clip-list"></ul>
   </section>
 
+  <section id="queue-panel">
+    <h2 data-i18n="queue"></h2>
+    <ul id="queue-picks"></ul>
+    <button id="queue-export-btn" type="button" data-i18n="queueExportSelected"></button>
+    <button id="queue-retry-btn" type="button" data-i18n="queueRetryFailed"></button>
+    <p id="queue-error" role="alert"></p>
+    <ul id="queue-jobs"></ul>
+  </section>
+
+  <section id="output-panel">
+    <h2 data-i18n="outputFolder"></h2>
+    <input id="output-dir" type="text" spellcheck="false">
+    <button id="output-browse-btn" type="button" data-i18n="outputBrowse"></button>
+    <button id="output-save-btn" type="button" data-i18n="outputSave"></button>
+    <button id="open-folder-btn" type="button" data-i18n="openFolder"></button>
+    <p id="output-msg" role="status"></p>
+  </section>
+
   <footer id="diagnostics">
     <button id="test-btn" type="button">Run test</button>
     <span id="result" role="status"></span>
