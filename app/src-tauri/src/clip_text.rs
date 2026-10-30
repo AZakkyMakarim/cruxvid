@@ -1,5 +1,5 @@
 //! Title and description per Clip: manual edit and per-field Regenerate. Both write straight into the Project.
-//! The text language follows the Clip's Caption language.
+//! The text language follows the Clip's Caption language (its translation, if any).
 
 use crate::{clips::Clip, gemini::GeminiClient, project::{Project, ProjectStore}, transcript::Transcript};
 use serde::Deserialize;
@@ -20,15 +20,15 @@ struct Described {
     description: String,
 }
 
-/// Language of the Clip's Caption. shortcut: always the Transcript's; per-Clip translation (cruxvid-b2t.12) overrides it here.
-fn caption_language(transcript: &Transcript) -> &str {
-    &transcript.language
+/// Language of the Clip's Caption: its translation when it has one (translate.rs), else the Transcript's.
+fn caption_language<'a>(transcript: &'a Transcript, translated: Option<&'a str>) -> &'a str {
+    translated.unwrap_or(&transcript.language)
 }
 
 /// The prompt: task marker, target language, and only this Clip's spoken text.
-fn prompt(transcript: &Transcript, clip: &Clip) -> String {
+fn prompt(transcript: &Transcript, clip: &Clip, translated: Option<&str>) -> String {
     let words: Vec<&str> = transcript.words.iter().filter(|w| w.start >= clip.start - 0.05 && w.end <= clip.end + 0.05).map(|w| w.text.as_str()).collect();
-    format!("{DESCRIBE_PROMPT}\nLanguage: {}\nTranscript of the clip:\n{}\n", caption_language(transcript), words.join(" "))
+    format!("{DESCRIBE_PROMPT}\nLanguage: {}\nTranscript of the clip:\n{}\n", caption_language(transcript, translated), words.join(" "))
 }
 
 fn clip_mut<'a>(p: &'a mut Project, clip_id: &str) -> Result<&'a mut Clip, String> {
@@ -50,9 +50,10 @@ pub fn edit(store: &ProjectStore, project_id: &str, clip_id: &str, title: &str, 
 }
 
 /// Asks Gemini for new text and replaces `field` of this Clip only. On any error nothing is saved.
-pub fn regenerate(store: &ProjectStore, gemini: &GeminiClient, project_id: &str, clip_id: &str, field: TextField) -> Result<Clip, String> {
+/// `translated`: the Clip's Caption language when it was translated; the text is written in it.
+pub fn regenerate(store: &ProjectStore, gemini: &GeminiClient, project_id: &str, clip_id: &str, field: TextField, translated: Option<&str>) -> Result<Clip, String> {
     let mut p = store.load(project_id)?;
-    let ask = prompt(&p.transcript, p.clips.iter().find(|c| c.id == clip_id).ok_or_else(|| format!("Clip not found: {clip_id}"))?);
+    let ask = prompt(&p.transcript, p.clips.iter().find(|c| c.id == clip_id).ok_or_else(|| format!("Clip not found: {clip_id}"))?, translated);
     let new: Described = gemini.generate_json(&ask)?;
     let clip = clip_mut(&mut p, clip_id)?;
     match field {
@@ -74,8 +75,11 @@ mod tests {
         let w = |t: &str, s: f64| Word { text: t.into(), start: s, end: s + 0.5 };
         let t = Transcript { language: "id".into(), words: vec![w("before.", 0.0), w("Halo", 10.0), w("dunia.", 11.0), w("after.", 30.0)] };
         let clip = Clip { id: "c".into(), number: 1, start: 10.0, end: 11.5, title: String::new(), description: String::new(), hook_score: 0, hook_reason: String::new() };
-        let p = prompt(&t, &clip);
+        let p = prompt(&t, &clip, None);
         assert!(p.contains("CRUXVID_TASK: describe") && p.contains("Language: id") && p.contains("Halo dunia."), "{p}");
         assert!(!p.contains("before.") && !p.contains("after."), "{p}");
+        // A translated Clip is described in its Caption language, still from its own spoken words.
+        let p = prompt(&t, &clip, Some("en"));
+        assert!(p.contains("Language: en") && !p.contains("Language: id") && p.contains("Halo dunia."), "{p}");
     }
 }

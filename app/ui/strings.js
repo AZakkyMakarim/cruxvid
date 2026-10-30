@@ -109,3 +109,9 @@ strings.speakerScrub = 'Preview time (s)';
 // Project history.
 strings.history = 'Projects';
 strings.historyOpen = 'Open';
+
+// Caption translation per Clip (cruxvid-b2t.12).
+strings.clipLanguage = 'Caption language';
+strings.languageOriginal = 'Original';
+strings.translating = 'Translating...';
+strings.languages = { English: 'English', Indonesian: 'Indonesian', Spanish: 'Spanish', French: 'French', German: 'German', Portuguese: 'Portuguese', Japanese: 'Japanese', Korean: 'Korean', Chinese: 'Chinese' };

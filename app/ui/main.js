@@ -1,6 +1,7 @@
 import { initAiSettings } from './ai-settings.js';
 import { initCaptionPanel } from './caption-panel.js';
 import { initClipArrange } from './clip-arrange.js';
+import { initClipLanguage } from './clip-language.js';
 import { renderClips } from './clip-list.js';
 import { initDiagnostics } from './diagnostics.js';
 import { initHistoryPanel } from './history-panel.js';
@@ -15,6 +16,7 @@ function showProject(project, view) {
   renderClips(project);
   initClipArrange(project, view);
   initCaptionPanel(project);
+  initClipLanguage(project);
   initQueuePanel(project);
 }
 

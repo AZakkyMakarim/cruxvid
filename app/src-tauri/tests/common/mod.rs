@@ -26,6 +26,8 @@ impl FakeGemini {
                     let body = read_request_body(&mut s);
                     let file = if body.contains("CRUXVID_TASK: transcribe") {
                         "gemini_transcribe_response.json"
+                    } else if body.contains("CRUXVID_TASK: translate") {
+                        "gemini_translate_response.json"
                     } else if body.contains("CRUXVID_TASK: describe") {
                         "gemini_describe_response.json"
                     } else if body.contains("CRUXVID_TASK: speakers") {

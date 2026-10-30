@@ -43,3 +43,5 @@ body { font-family: system-ui, sans-serif; margin: 1rem 1.5rem; }
 #history-list { list-style: none; padding: 0; }
 .history-item { display: flex; gap: 1rem; padding: .2rem 0; }
 #history-error { color: #b00020; }
+.clip-language-field { display: block; margin: .3rem 0; }
+.clip-language-status[data-error="true"] { color: #b00020; }

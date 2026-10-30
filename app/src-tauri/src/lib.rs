@@ -24,6 +24,8 @@ pub mod speaker;
 mod speaker_commands;
 mod tools;
 pub mod transcript;
+pub mod translate;
+mod translate_commands;
 pub mod vtt;
 pub mod ytdlp;
 
@@ -92,7 +94,9 @@ pub fn run() {
             speaker_commands::get_layout_at,
             speaker_commands::get_clip_frame_at,
             history::list_projects,
-            history::open_project
+            history::open_project,
+            translate_commands::set_clip_language,
+            translate_commands::get_clip_language
         ])
         .run(tauri::generate_context!())
         .expect("error while running cruxvid");
