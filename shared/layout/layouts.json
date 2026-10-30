@@ -1,0 +1,31 @@
+{
+  "canvas": { "w": 1080, "h": 1920 },
+  "default_preset": "focus",
+  "no_face_preset": "full",
+  "multi_face_preset": "full",
+  "webcam_face_widths": 3.0,
+  "presets": [
+    { "name": "focus", "panes": [{ "dest": [0, 0, 1080, 1920], "source": "face" }] },
+    {
+      "name": "stack",
+      "panes": [
+        { "dest": [0, 0, 1080, 960], "source": "face" },
+        { "dest": [0, 960, 1080, 960], "source": "center" }
+      ]
+    },
+    {
+      "name": "webcam_game",
+      "panes": [
+        { "dest": [0, 0, 1080, 640], "source": "webcam" },
+        { "dest": [0, 640, 1080, 1280], "source": "center" }
+      ]
+    },
+    { "name": "full", "panes": [{ "dest": [0, 0, 1080, 1920], "source": "fit" }] }
+  ],
+  "_notes": {
+    "dest": "[x, y, w, h] in canvas pixels. A pane shows one crop of the Source scaled to fill dest.",
+    "source": "face: largest dest-shaped window centred on the face. webcam: dest-shaped window webcam_face_widths x the face width, centred on the face. center: largest dest-shaped window centred on the frame. fit: whole frame scaled to canvas width, centred, black bars (dest is reduced to the fitted rectangle).",
+    "no_face_preset": "Used when no face is found (the user is told).",
+    "multi_face_preset": "Used for 2+ faces until active-speaker follow (cruxvid-b2t.14) exists: a single crop would drop people."
+  }
+}

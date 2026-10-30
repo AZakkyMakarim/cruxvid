@@ -1,0 +1,69 @@
+{
+  "name": "yt_vod",
+  "url": "https://www.youtube.com/watch?v=WRibE2nt8wM",
+  "title": "Lecture 1: Introduction to Individual Decision-Making",
+  "duration_s": 3436,
+  "live_status": "not_live",
+  "format": "399 - 1920x1080 (1080p)+251-15 - audio only (English (US) original (default), medium)",
+  "source_size_bytes_est": 321452933,
+  "source_size_basis": "sum of requested_formats filesize/filesize_approx, else tbr*duration",
+  "metadata_only_bytes": 1006108,
+  "clip": [
+    1200.0,
+    1290.0
+  ],
+  "runs": {
+    "A0_streamcut_untuned": {
+      "tuned": false,
+      "down_bytes": 19614044,
+      "up_bytes": 10477,
+      "tls_conns": 3,
+      "secs": 120.1,
+      "rc": "timeout",
+      "err": "killed after 120s; bytes are a lower bound",
+      "pct_of_source": 6.1
+    },
+    "A_streamcut_exact": {
+      "tuned": true,
+      "down_bytes": 14748273,
+      "up_bytes": 20588,
+      "tls_conns": 4,
+      "secs": 58.1,
+      "rc": 0,
+      "err": "",
+      "pct_of_source": 4.59,
+      "out_duration_s": 90.0,
+      "duration_ok": true,
+      "file": "yt_vod_A_streamcut_exact.mp4",
+      "start_offset_vs_B_s": 0.0
+    },
+    "A2_streamcut_keyframe": {
+      "tuned": true,
+      "down_bytes": 14193171,
+      "up_bytes": 20552,
+      "tls_conns": 4,
+      "secs": 5.7,
+      "rc": 0,
+      "err": "",
+      "pct_of_source": 4.42,
+      "out_duration_s": 90.014,
+      "duration_ok": true,
+      "file": "yt_vod_A2_streamcut_keyframe.mp4",
+      "start_offset_vs_B_s": 0.0
+    },
+    "B_padded_then_local": {
+      "tuned": true,
+      "down_bytes": 15938811,
+      "up_bytes": 22364,
+      "tls_conns": 4,
+      "secs": 5.9,
+      "rc": 0,
+      "err": "",
+      "pct_of_source": 4.96,
+      "padded_file_bytes": 10550631,
+      "out_duration_s": 90.0,
+      "duration_ok": true,
+      "file": "yt_vod_B_final.mp4"
+    }
+  }
+}

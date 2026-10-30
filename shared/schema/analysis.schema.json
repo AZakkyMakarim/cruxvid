@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Analysis (Gemini response text for the analyze task)",
+  "type": "object",
+  "required": ["sections"],
+  "properties": {
+    "sections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["label", "start", "end"],
+        "properties": {
+          "label": { "enum": ["opening", "content", "sponsor", "closing", "idle"] },
+          "start": { "type": "number", "minimum": 0 },
+          "end": { "type": "number", "minimum": 0 },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "hook_score": { "type": "integer", "minimum": 0, "maximum": 100 },
+          "hook_reason": { "type": "string" },
+          "best_start": { "type": "number", "minimum": 0 },
+          "best_end": { "type": "number", "minimum": 0 }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

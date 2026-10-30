@@ -1,6 +1,20 @@
-
 # Beads / Dolt files (added by bd init)
 .dolt/
 *.db
 .beads-credential-key
 .beads/proxieddb/
+
+# spike b2t-3: local venv, models, media, run outputs
+spikes/b2t-3/.venv/
+spikes/b2t-3/models/
+spikes/b2t-3/media/
+spikes/b2t-3/out/
+spikes/b2t-3/__pycache__/
+
+# app (Tauri): build output and dependencies
+node_modules/
+dist/
+target/
+app/src-tauri/gen/
+test-results/
+playwright-report/

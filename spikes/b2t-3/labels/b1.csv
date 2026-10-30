@@ -1,0 +1,17 @@
+# Brad Pitt / Between Two Ferns (b1). slot = x-order of face in frame: 2-shot 0=Brad(left) 1=Zach(right); Louis CK stand-up 3-shot 0=Brad 1=Louis 2=Zach
+# Labels: manual, from caption text (who asks / who answers) + 160x120 head-crop contact sheets at 1 fps looking at mouth/gesture. Only wide-shot seconds labelled; others unlabelled.
+start,end,slot
+1,9,1
+63,69,1
+95,98,0
+98,99,1
+107,110,0
+127,132,1
+156,162,0
+260,263,0
+263,271,1
+273,277,1
+293,296,1
+303,305,1
+170,188,1
+44,45,O

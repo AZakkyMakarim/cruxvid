@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cruxvid</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Cruxvid</h1>
+
+  <section id="source-panel">
+    <h2 data-i18n="source"></h2>
+    <input id="source-path" type="text" spellcheck="false" data-i18n-placeholder="pathPlaceholder">
+    <button id="browse-btn" type="button" data-i18n="browse"></button>
+    <button id="analyze-btn" type="button" data-i18n="analyze"></button>
+    <button id="manual-open-btn" type="button" data-i18n="manualOpen"></button>
+    <p id="token-estimate" role="status"></p>
+    <p id="status" role="status"></p>
+    <p id="error" role="alert"></p>
+  </section>
+
+  <section id="history-panel">
+    <h2 id="history-title" data-i18n="history"></h2>
+    <ul id="history-list"></ul>
+    <p id="history-error" role="alert"></p>
+  </section>
+
+  <section id="clips-panel">
+    <h2 data-i18n="clips"></h2>
+    <p id="clip-controls">
+      <label id="clip-order-label" for="clip-order" data-i18n="clipOrder"></label>
+      <select id="clip-order"></select>
+      <label id="clip-threshold-label" for="clip-threshold" data-i18n="clipThreshold"></label>
+      <input id="clip-threshold" type="range" min="0" max="100" step="1" value="50">
+      <output id="clip-threshold-value" for="clip-threshold">50</output>
+    </p>
+    <p id="manual-clip">
+      <label><span id="manual-start-label" data-i18n="rangeStart"></span> <input id="manual-start" type="text" size="8"></label>
+      <label><span id="manual-end-label" data-i18n="rangeEnd"></span> <input id="manual-end" type="text" size="8"></label>
+      <button id="manual-add-btn" type="button" data-i18n="manualAdd"></button>
+      <span id="manual-warning" role="status"></span>
+      <span id="manual-error" role="alert"></span>
+    </p>
+    <ul id="clip-list"></ul>
+  </section>
+
+  <section id="settings-panel">
+    <h2 data-i18n="settings"></h2>
+    <p>
+      <label for="ui-language" data-i18n="uiLanguage"></label>
+      <select id="ui-language">
+        <option value="id">Bahasa Indonesia</option>
+        <option value="en">English</option>
+      </select>
+      <label for="ui-theme" data-i18n="uiTheme"></label>
+      <select id="ui-theme">
+        <option value="system" data-i18n="themes.system"></option>
+        <option value="dark" data-i18n="themes.dark"></option>
+        <option value="light" data-i18n="themes.light"></option>
+      </select>
+      <span id="ui-prefs-error" role="alert"></span>
+    </p>
+    <label id="model-label" for="model-input" data-i18n="model"></label>
+    <input id="model-input" type="text" spellcheck="false">
+    <button id="model-save" type="button" data-i18n="saveModel"></button>
+    <span id="model-status" role="status"></span>
+    <p>
+      <span id="key-status" role="status"></span>
+      <button id="key-change" type="button" data-i18n="keyChange"></button>
+      <button id="key-remove" type="button" data-i18n="keyRemove"></button>
+    </p>
+  </section>
+
+  <dialog id="key-dialog">
+    <h2 id="key-title" data-i18n="keyTitle"></h2>
+    <p id="key-help" data-i18n="keyHelp"></p>
+    <input id="key-input" type="password" autocomplete="off" spellcheck="false" aria-labelledby="key-title">
+    <p id="key-error" role="alert"></p>
+    <button id="key-save" type="button" data-i18n="keySave"></button>
+    <button id="key-cancel" type="button" data-i18n="keyCancel"></button>
+  </dialog>
+
+  <section id="queue-panel">
+    <h2 data-i18n="queue"></h2>
+    <ul id="queue-picks"></ul>
+    <button id="queue-export-btn" type="button" data-i18n="queueExportSelected"></button>
+    <button id="queue-retry-btn" type="button" data-i18n="queueRetryFailed"></button>
+    <p id="queue-error" role="alert"></p>
+    <ul id="queue-jobs"></ul>
+  </section>
+
+  <section id="output-panel">
+    <h2 data-i18n="outputFolder"></h2>
+    <input id="output-dir" type="text" spellcheck="false">
+    <button id="output-browse-btn" type="button" data-i18n="outputBrowse"></button>
+    <button id="output-save-btn" type="button" data-i18n="outputSave"></button>
+    <button id="open-folder-btn" type="button" data-i18n="openFolder"></button>
+    <p id="output-msg" role="status"></p>
+  </section>
+
+  <footer id="diagnostics">
+    <button id="test-btn" type="button" data-i18n="runTest"></button>
+    <span id="result" role="status"></span>
+  </footer>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>

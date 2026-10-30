@@ -1,0 +1,5 @@
+CRUXVID_TASK: analyze
+Split the transcript below into consecutive sections and label each: "opening", "content", "sponsor" (ads and mid-rolls), "closing" or "idle".
+Section boundaries must fall on sentence boundaries. Only "content" sections are topics; for each give a short "title", a "description", a "hook_score" (0-100, how strongly it grabs a viewer) and a one-sentence "hook_reason".
+A topic must stay on one subject. If a content topic is longer than 120 seconds, also give "best_start" and "best_end": its most complete, self-contained sub-range of 60 to 120 seconds, on sentence boundaries.
+Return JSON only, matching shared/schema/analysis.schema.json. Times are seconds from the start of the video.
