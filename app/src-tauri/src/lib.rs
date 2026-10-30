@@ -18,6 +18,8 @@ pub mod settings;
 pub mod source;
 mod tools;
 pub mod transcript;
+pub mod vtt;
+pub mod ytdlp;
 
 use config::AppConfig;
 use engine::{Engine, EngineConfig};
@@ -43,6 +45,10 @@ pub fn run() {
                 keys,
             )
             .with_timeout(timeout);
+            let engine = match cfg.ytdlp_path {
+                Some(p) => engine.with_ytdlp(p),
+                None => engine,
+            };
             if cfg.test_mode {
                 let ids = std::env::var("CRUXVID_FAIL_ONCE_CLIPS").unwrap_or_default();
                 engine.fail_once(ids.split(',').filter(|s| !s.is_empty()).map(String::from).collect());
