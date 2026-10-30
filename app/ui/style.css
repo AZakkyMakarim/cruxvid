@@ -45,3 +45,9 @@ body { font-family: system-ui, sans-serif; margin: 1rem 1.5rem; }
 #history-error { color: #b00020; }
 .clip-language-field { display: block; margin: .3rem 0; }
 .clip-language-status[data-error="true"] { color: #b00020; }
+
+#manual-clip label, .clip-range-editor label { margin-right: .5rem; }
+.range-error, #manual-error { color: #b00020; }
+.range-warning[data-warning], #manual-warning { color: #8a5a00; }
+.clip-preview { display: block; width: 480px; max-width: 100%; margin: .4rem 0; background: #000; }
+.clip-preview[hidden] { display: none; }

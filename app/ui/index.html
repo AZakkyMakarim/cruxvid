@@ -14,6 +14,7 @@
     <input id="source-path" type="text" spellcheck="false">
     <button id="browse-btn" type="button"></button>
     <button id="analyze-btn" type="button"></button>
+    <button id="manual-open-btn" type="button"></button>
     <p id="token-estimate" role="status"></p>
     <p id="status" role="status"></p>
     <p id="error" role="alert"></p>
@@ -33,6 +34,13 @@
       <label id="clip-threshold-label" for="clip-threshold"></label>
       <input id="clip-threshold" type="range" min="0" max="100" step="1" value="50">
       <output id="clip-threshold-value" for="clip-threshold">50</output>
+    </p>
+    <p id="manual-clip">
+      <label><span id="manual-start-label"></span> <input id="manual-start" type="text" size="8"></label>
+      <label><span id="manual-end-label"></span> <input id="manual-end" type="text" size="8"></label>
+      <button id="manual-add-btn" type="button"></button>
+      <span id="manual-warning" role="status"></span>
+      <span id="manual-error" role="alert"></span>
     </p>
     <ul id="clip-list"></ul>
   </section>

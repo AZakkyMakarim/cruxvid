@@ -343,7 +343,7 @@ impl Engine {
 
     /// The Source (a local file) and Clip times to render from. A link Source is stream-cut to just the
     /// Clip's range first, so the returned Clip's times are relative to that cut file (docs/spikes/b2t-1-stream-cut.md).
-    fn clip_media(&self, project_id: &str, p: &Project, clip: &clips::Clip) -> Result<(source::Source, clips::Clip), String> {
+    pub(crate) fn clip_media(&self, project_id: &str, p: &Project, clip: &clips::Clip) -> Result<(source::Source, clips::Clip), String> {
         if !ytdlp::is_link(&p.source.path) {
             return Ok((p.source.clone(), clip.clone()));
         }
