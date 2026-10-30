@@ -1,7 +1,9 @@
-import { initCaptionPanel } from './caption-panel.js';
-import { initAiSettings } from './ai-settings.js';
+import { initAiSettings } from './ai-settings.js';
+import { initCaptionPanel } from './caption-panel.js';
 import { renderClips } from './clip-list.js';
 import { initDiagnostics } from './diagnostics.js';
+import { initOutputPanel } from './output-panel.js';
+import { initQueuePanel } from './queue-panel.js';
 import { initSourcePanel } from './source-panel.js';
 import { strings } from './strings.js';
 
@@ -11,7 +13,9 @@ initSourcePanel({
   onProject: (project) => {
     renderClips(project);
     initCaptionPanel(project);
+    initQueuePanel(project);
   },
   beforeAnalyze: initAiSettings(),
 });
 initDiagnostics();
+initOutputPanel();

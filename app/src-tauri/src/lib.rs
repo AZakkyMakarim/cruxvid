@@ -8,9 +8,12 @@ pub mod engine;
 pub mod export;
 pub mod faces;
 pub mod gemini;
+mod export_queue_commands;
 pub mod layout;
 pub mod layout_store;
+pub mod output_folder;
 pub mod project;
+pub mod queue;
 pub mod settings;
 pub mod source;
 mod tools;
@@ -40,6 +43,10 @@ pub fn run() {
                 keys,
             )
             .with_timeout(timeout);
+            if cfg.test_mode {
+                let ids = std::env::var("CRUXVID_FAIL_ONCE_CLIPS").unwrap_or_default();
+                engine.fail_once(ids.split(',').filter(|s| !s.is_empty()).map(String::from).collect());
+            }
             app.manage(Arc::new(engine));
             Ok(())
         })
@@ -60,7 +67,13 @@ pub fn run() {
             commands::get_layout,
             commands::set_layout_preset,
             commands::shift_layout_pane,
-            commands::get_clip_frame
+            commands::get_clip_frame,
+            export_queue_commands::export_clips,
+            export_queue_commands::retry_failed_exports,
+            export_queue_commands::export_jobs,
+            export_queue_commands::get_output_dir,
+            export_queue_commands::set_output_dir,
+            export_queue_commands::open_output_dir
         ])
         .run(tauri::generate_context!())
         .expect("error while running cruxvid");

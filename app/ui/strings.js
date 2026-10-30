@@ -14,24 +14,41 @@ export const strings = {
   exported: (p) => `Saved ${p}`,
 };
 
-// Caption panel.
-strings.caption = 'Caption';
-strings.captionPreset = 'Preset';
-strings.captionFont = 'Font';
-strings.captionSize = 'Size';
-strings.captionColor = 'Color';
-strings.captionHighlight = 'Highlight';
-strings.captionOutline = 'Outline';
-strings.captionPosition = 'Position';
-strings.captionWords = 'Words (edit to correct; empty restores the original)';
+// Caption panel.
 
-Object.assign(strings, {
-  settings: 'Settings',
-  model: 'Gemini model',
-  saveModel: 'Save model',
-  modelSaved: 'Model saved.',
-  keyTitle: 'Gemini API key needed',
-  keyHelp: 'AI analysis uses your own Gemini API key. It is stored in the Windows Credential Manager.',
+strings.caption = 'Caption';
+
+strings.captionPreset = 'Preset';
+
+strings.captionFont = 'Font';
+
+strings.captionSize = 'Size';
+
+strings.captionColor = 'Color';
+
+strings.captionHighlight = 'Highlight';
+
+strings.captionOutline = 'Outline';
+
+strings.captionPosition = 'Position';
+
+strings.captionWords = 'Words (edit to correct; empty restores the original)';
+
+
+Object.assign(strings, {
+
+  settings: 'Settings',
+
+  model: 'Gemini model',
+
+  saveModel: 'Save model',
+
+  modelSaved: 'Model saved.',
+
+  keyTitle: 'Gemini API key needed',
+
+  keyHelp: 'AI analysis uses your own Gemini API key. It is stored in the Windows Credential Manager.',
+
   layout: 'Layout',
   layoutPresets: { focus: 'Focus', stack: 'Split top-bottom', webcam_game: 'Split person + game', full: 'Full' },
   layoutNotices: {
@@ -39,12 +56,34 @@ Object.assign(strings, {
     multiple_faces: 'Several faces found, using Full layout. Pick a Layout to change it.',
   },
   layoutHint: 'Drag a pane to move its crop, or focus it and use the arrow keys.',
-  keySave: 'Save key',
-  keyCancel: 'Cancel',
-  keyChange: 'Change key',
-  keyRemove: 'Remove key',
-  keySet: 'An API key is saved.',
-  keyUnset: 'No API key saved. Everything except AI analysis works without one.',
-  tokenEstimate: (e) =>
-    `Estimated Gemini usage: about ${e.total.toLocaleString('en-US')} tokens (${e.input.toLocaleString('en-US')} in, ${e.output.toLocaleString('en-US')} out) for ${Math.round(e.duration / 60)} min of video.`,
-});
+  keySave: 'Save key',
+
+  keyCancel: 'Cancel',
+
+  keyChange: 'Change key',
+
+  keyRemove: 'Remove key',
+
+  keySet: 'An API key is saved.',
+
+  keyUnset: 'No API key saved. Everything except AI analysis works without one.',
+
+  tokenEstimate: (e) =>
+
+    `Estimated Gemini usage: about ${e.total.toLocaleString('en-US')} tokens (${e.input.toLocaleString('en-US')} in, ${e.output.toLocaleString('en-US')} out) for ${Math.round(e.duration / 60)} min of video.`,
+
+});
+
+
+// Export queue and output folder.
+strings.queue = 'Export queue';
+strings.queueExportSelected = 'Export selected';
+strings.queueRetryFailed = 'Retry failed';
+strings.queueStatus = { waiting: 'Waiting', running: 'Running', done: 'Done', failed: 'Failed' };
+strings.outputFolder = 'Output folder';
+strings.outputBrowse = 'Browse...';
+strings.outputSave = 'Save';
+strings.openFolder = 'Open folder';
+strings.outputSaved = (p) => `Output folder: ${p}`;
+strings.folderOpened = (p) => `Opened ${p}`;
+
