@@ -5,6 +5,7 @@
 //! stray env var can never point a normal launch at a fake server.
 
 use serde::Serialize;
+use std::path::PathBuf;
 
 pub const DEFAULT_GEMINI_BASE_URL: &str = "https://generativelanguage.googleapis.com";
 
@@ -22,6 +23,11 @@ pub struct AppConfig {
     pub test_mode: bool,
     pub gemini_base_url: String,
     pub source_resolver: SourceResolver,
+    /// Test-mode only: Project store and Export output folders (else OS defaults, see `lib.rs`).
+    #[serde(skip)]
+    pub data_dir: Option<PathBuf>,
+    #[serde(skip)]
+    pub output_dir: Option<PathBuf>,
 }
 
 impl AppConfig {
@@ -32,6 +38,8 @@ impl AppConfig {
             test_mode,
             gemini_base_url: DEFAULT_GEMINI_BASE_URL.to_string(),
             source_resolver: SourceResolver::Real,
+            data_dir: None,
+            output_dir: None,
         };
         if test_mode {
             if let Some(url) = env("CRUXVID_GEMINI_BASE_URL").filter(|u| !u.is_empty()) {
@@ -40,6 +48,8 @@ impl AppConfig {
             if env("CRUXVID_SOURCE_RESOLVER").as_deref() == Some("fake") {
                 cfg.source_resolver = SourceResolver::Fake;
             }
+            cfg.data_dir = env("CRUXVID_DATA_DIR").filter(|v| !v.is_empty()).map(PathBuf::from);
+            cfg.output_dir = env("CRUXVID_OUTPUT_DIR").filter(|v| !v.is_empty()).map(PathBuf::from);
         }
         cfg
     }
@@ -98,6 +108,18 @@ mod tests {
             assert!(!c.test_mode, "value {v:?} must not enable test mode");
             assert_eq!(c.gemini_base_url, DEFAULT_GEMINI_BASE_URL);
         }
+    }
+
+    #[test]
+    fn dir_overrides_only_in_test_mode() {
+        let dirs = [("CRUXVID_DATA_DIR", "D:/d"), ("CRUXVID_OUTPUT_DIR", "D:/o")];
+        let off = cfg(&dirs);
+        assert_eq!((off.data_dir, off.output_dir), (None, None));
+        let mut vars = dirs.to_vec();
+        vars.push(("CRUXVID_TEST_MODE", "1"));
+        let on = cfg(&vars);
+        assert_eq!(on.data_dir, Some(PathBuf::from("D:/d")));
+        assert_eq!(on.output_dir, Some(PathBuf::from("D:/o")));
     }
 
     #[test]
