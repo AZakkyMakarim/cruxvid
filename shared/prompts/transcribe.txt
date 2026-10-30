@@ -1,0 +1,4 @@
+CRUXVID_TASK: transcribe
+Transcribe the speech of the video below. Return JSON only, matching shared/schema/transcript.schema.json:
+{"language": "<ISO 639-1>", "words": [{"text": "<word incl. trailing punctuation>", "start": <seconds>, "end": <seconds>}]}
+Timestamps are seconds from the start of the video, one entry per spoken word.

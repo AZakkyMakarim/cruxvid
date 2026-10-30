@@ -1,0 +1,13 @@
+{
+ "candidates": [
+  {
+   "content": {
+    "parts": [
+     {
+      "text": "{\"sections\":[{\"label\":\"opening\",\"start\":0,\"end\":44.4},{\"label\":\"content\",\"start\":45,\"end\":124.4,\"title\":\"First topic\",\"description\":\"First topic: description of the topic.\",\"hook_score\":82,\"hook_reason\":\"One sentence on why first topic hooks viewers.\"},{\"label\":\"content\",\"start\":130,\"end\":239.4,\"title\":\"Second topic\",\"description\":\"Second topic: description of the topic.\",\"hook_score\":64,\"hook_reason\":\"One sentence on why second topic hooks viewers.\"},{\"label\":\"content\",\"start\":245,\"end\":299.4,\"title\":\"Too short topic\",\"description\":\"Too short topic: description of the topic.\",\"hook_score\":40,\"hook_reason\":\"One sentence on why too short topic hooks viewers.\"},{\"label\":\"content\",\"start\":310,\"end\":399.4,\"title\":\"Fourth topic\",\"description\":\"Fourth topic: description of the topic.\",\"hook_score\":91,\"hook_reason\":\"One sentence on why fourth topic hooks viewers.\"},{\"label\":\"sponsor\",\"start\":400,\"end\":439.4},{\"label\":\"content\",\"start\":445,\"end\":559.4,\"title\":\"Fifth topic\",\"description\":\"Fifth topic: description of the topic.\",\"hook_score\":47,\"hook_reason\":\"One sentence on why fifth topic hooks viewers.\"},{\"label\":\"closing\",\"start\":560,\"end\":599.4}]}"
+     }
+    ]
+   }
+  }
+ ]
+}

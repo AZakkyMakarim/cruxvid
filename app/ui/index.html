@@ -4,21 +4,30 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Cruxvid</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <h1>Cruxvid</h1>
-  <button id="test-btn" type="button">Run test</button>
-  <p id="result" role="status"></p>
-  <script>
-    document.getElementById('test-btn').addEventListener('click', async () => {
-      const out = document.getElementById('result');
-      try {
-        const c = await window.__TAURI__.core.invoke('get_config');
-        out.textContent = `ok test_mode=${c.test_mode} gemini=${c.gemini_base_url} resolver=${c.source_resolver}`;
-      } catch (e) {
-        out.textContent = `error ${e}`;
-      }
-    });
-  </script>
+
+  <section id="source-panel">
+    <h2 data-i18n="source"></h2>
+    <input id="source-path" type="text" spellcheck="false">
+    <button id="browse-btn" type="button"></button>
+    <button id="analyze-btn" type="button"></button>
+    <p id="status" role="status"></p>
+    <p id="error" role="alert"></p>
+  </section>
+
+  <section id="clips-panel">
+    <h2 data-i18n="clips"></h2>
+    <ul id="clip-list"></ul>
+  </section>
+
+  <footer id="diagnostics">
+    <button id="test-btn" type="button">Run test</button>
+    <span id="result" role="status"></span>
+  </footer>
+
+  <script type="module" src="main.js"></script>
 </body>
 </html>
