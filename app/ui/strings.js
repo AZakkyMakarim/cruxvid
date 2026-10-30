@@ -102,3 +102,7 @@ strings.clipDescription = 'Description';
 strings.regenerate = 'Regenerate';
 strings.save = 'Save';
 strings.clipTextSaved = 'Saved.';
+
+// Project history.
+strings.history = 'Projects';
+strings.historyOpen = 'Open';

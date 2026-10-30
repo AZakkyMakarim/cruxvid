@@ -49,3 +49,7 @@ export const pickFolder = () => window.__TAURI__.dialog.open({ directory: true, 
 // Clip title/description (cruxvid-b2t.10)
 export const editClipText = (projectId, clipId, title, description) => invoke('edit_clip_text', { projectId, clipId, title, description });
 export const regenerateClipText = (projectId, clipId, field) => invoke('regenerate_clip_text', { projectId, clipId, field });
+
+// Project history (cruxvid-b2t.16)
+export const listProjects = () => invoke('list_projects');
+export const openProject = (id) => invoke('open_project', { id });

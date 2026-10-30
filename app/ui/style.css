@@ -35,3 +35,8 @@ body { font-family: system-ui, sans-serif; margin: 1rem 1.5rem; }
 .clip-text-field { display: flex; gap: .4rem; align-items: start; }
 .clip-title-input, .clip-desc-input { flex: 1; }
 .clip-text-status[data-error="true"] { color: #b00020; }
+
+#history-panel { margin-top: 1rem; }
+#history-list { list-style: none; padding: 0; }
+.history-item { display: flex; gap: 1rem; padding: .2rem 0; }
+#history-error { color: #b00020; }

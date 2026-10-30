@@ -175,6 +175,10 @@ impl Engine {
         crate::clip_text::regenerate(&self.store, &self.client()?, project_id, clip_id, field)
     }
 
+    pub fn data_dir(&self) -> &Path {
+        &self.data_dir
+    }
+
     pub fn output_dir(&self) -> PathBuf {
         self.output.get()
     }

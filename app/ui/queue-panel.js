@@ -10,7 +10,10 @@ function el(tag, props = {}, ...children) {
   return e;
 }
 
+let shown = 0; // which initQueuePanel call owns the panel
+
 export function initQueuePanel(project) {
+  const mine = ++shown;
   const picks = document.getElementById('queue-picks');
   const jobsList = document.getElementById('queue-jobs');
   const error = document.getElementById('queue-error');
@@ -46,6 +49,7 @@ export function initQueuePanel(project) {
     try {
       for (;;) {
         const jobs = await exportJobs(project.id);
+        if (mine !== shown) break; // another Project was opened meanwhile
         render(jobs);
         if (!jobs.some((j) => j.status === 'waiting' || j.status === 'running')) break;
         await new Promise((r) => setTimeout(r, POLL_MS));
@@ -72,4 +76,5 @@ export function initQueuePanel(project) {
     return run(() => exportClips(project.id, ids));
   };
   document.getElementById('queue-retry-btn').onclick = () => run(() => retryFailedExports(project.id));
+  poll(); // a reopened Project shows its saved queue (and follows jobs that resumed)
 }
