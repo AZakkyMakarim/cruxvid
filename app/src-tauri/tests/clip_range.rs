@@ -102,6 +102,7 @@ fn trimming_the_start_keeps_a_followed_layout_in_step_with_the_video() {
     let layout = Layout::auto(&[], 1920, 1080);
     let mut followed = layout.clone();
     followed.follow = vec![Key { t: 0.0, cx: 0.3 }, Key { t: 20.0, cx: 0.7 }];
+    followed.user = true; // a Layout the user chose is kept, a detected one is detected again (tests/layout.rs)
     cruxvid_lib::layout_store::LayoutStore::new(e.data_dir().to_path_buf()).put(&p.id, &id, &followed).unwrap();
     clip_range::set_range(&e, &p.id, &id, 95.0, 190.0).unwrap(); // starts 5 s earlier
     let l = e.clip_layout(&p.id, &id).unwrap();

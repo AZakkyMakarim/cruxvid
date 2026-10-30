@@ -2,8 +2,8 @@
 //! Kept beside (not inside) project.json so Layout work never touches the Project/Clip model.
 //! The caller validates the project id (by loading the Project first).
 
-use crate::layout::Layout;
-use std::{collections::HashMap, path::PathBuf};
+use crate::{fsutil, layout::Layout};
+use std::{collections::HashMap, path::PathBuf, sync::Mutex};
 
 pub struct LayoutStore {
     root: PathBuf,
@@ -19,18 +19,30 @@ impl LayoutStore {
     }
 
     pub fn get(&self, project_id: &str, clip_id: &str) -> Result<Option<Layout>, String> {
-        let Ok(bytes) = std::fs::read(self.file(project_id)) else { return Ok(None) };
-        let mut all: HashMap<String, Layout> = serde_json::from_slice(&bytes).map_err(|e| format!("Layout file is damaged: {e}"))?;
+        let mut all: HashMap<String, Layout> = fsutil::read_json(&self.file(project_id), "layout")?;
         Ok(all.remove(clip_id))
     }
 
-    pub fn put(&self, project_id: &str, clip_id: &str, layout: &Layout) -> Result<(), String> {
+    /// Read-modify-write of layouts.json under one lock (shortcut: one lock for all Projects). A damaged file is an error, never an empty map.
+    fn update(&self, project_id: &str, f: impl FnOnce(&mut HashMap<String, Layout>)) -> Result<(), String> {
+        static LOCK: Mutex<()> = Mutex::new(());
+        let _g = fsutil::lock(&LOCK);
         let file = self.file(project_id);
-        let mut all: HashMap<String, Layout> =
-            std::fs::read(&file).ok().and_then(|b| serde_json::from_slice(&b).ok()).unwrap_or_default();
-        all.insert(clip_id.to_string(), layout.clone());
-        let json = serde_json::to_vec_pretty(&all).map_err(|e| e.to_string())?;
-        std::fs::write(&file, json).map_err(|e| format!("Cannot save layout: {e}"))
+        let mut all: HashMap<String, Layout> = fsutil::read_json(&file, "layout")?;
+        f(&mut all);
+        fsutil::write_json(&file, &all, "layout")
+    }
+
+    pub fn put(&self, project_id: &str, clip_id: &str, layout: &Layout) -> Result<(), String> {
+        self.update(project_id, |all| {
+            all.insert(clip_id.to_string(), layout.clone());
+        })
+    }
+
+    pub fn remove(&self, project_id: &str, clip_id: &str) -> Result<(), String> {
+        self.update(project_id, |all| {
+            all.remove(clip_id);
+        })
     }
 }
 
@@ -62,5 +74,26 @@ mod tests {
         s.put("p1", "clip-2", &l.with_preset("focus").unwrap()).unwrap();
         assert_eq!(s.get("p1", "clip-1").unwrap(), Some(l));
         assert_eq!(s.get("p1", "clip-2").unwrap().unwrap().preset, "focus");
+    }
+
+    #[test]
+    fn concurrent_puts_all_survive_and_a_damaged_file_is_never_overwritten() {
+        let tmp = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(tmp.path().join("projects/p1")).unwrap();
+        let s = std::sync::Arc::new(LayoutStore::new(tmp.path().to_path_buf()));
+        let l = Layout::auto(&[], 1920, 1080);
+        let threads: Vec<_> = (0..8)
+            .map(|t| {
+                let (s, l) = (s.clone(), l.clone());
+                std::thread::spawn(move || (0..10).for_each(|i| s.put("p1", &format!("c{t}-{i}"), &l).unwrap()))
+            })
+            .collect();
+        threads.into_iter().for_each(|t| t.join().unwrap());
+        let all: HashMap<String, Layout> = serde_json::from_slice(&std::fs::read(s.file("p1")).unwrap()).unwrap();
+        assert_eq!(all.len(), 80);
+
+        std::fs::write(s.file("p1"), "{ not json").unwrap();
+        assert!(s.put("p1", "x", &l).unwrap_err().contains("damaged"));
+        assert_eq!(std::fs::read_to_string(s.file("p1")).unwrap(), "{ not json");
     }
 }

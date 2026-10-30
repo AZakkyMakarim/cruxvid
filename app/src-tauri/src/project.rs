@@ -2,7 +2,7 @@
 
 use crate::{clips::Clip, source::Source, transcript::Transcript};
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
+use std::{path::PathBuf, sync::Mutex};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Project {
@@ -36,8 +36,19 @@ impl ProjectStore {
     pub fn save(&self, p: &Project) -> Result<(), String> {
         let file = self.file(&p.id)?;
         std::fs::create_dir_all(file.parent().unwrap()).map_err(|e| format!("Cannot save project: {e}"))?;
-        let json = serde_json::to_vec_pretty(p).map_err(|e| e.to_string())?;
-        std::fs::write(&file, json).map_err(|e| format!("Cannot save project: {e}"))
+        crate::fsutil::write_json(&file, p, "project")
+    }
+
+    /// Re-loads the Project, lets `f` change it and saves, all under one lock. Use this instead of load + save whenever
+    /// time passes in between (a Gemini call), so edits made in the meantime are not overwritten with a stale copy.
+    /// shortcut: one lock for all Projects, they are saved in milliseconds.
+    pub fn update<T>(&self, id: &str, f: impl FnOnce(&mut Project) -> Result<T, String>) -> Result<T, String> {
+        static LOCK: Mutex<()> = Mutex::new(());
+        let _g = crate::fsutil::lock(&LOCK);
+        let mut p = self.load(id)?;
+        let out = f(&mut p)?;
+        self.save(&p)?;
+        Ok(out)
     }
 
     pub fn load(&self, id: &str) -> Result<Project, String> {

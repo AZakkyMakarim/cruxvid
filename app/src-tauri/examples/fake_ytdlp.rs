@@ -1,6 +1,6 @@
 //! Fake yt-dlp for tests (never touches the network). Copy this exe somewhere and put `<exe>.json` next to it:
 //! {"fixture": "<video file served as the stream>", "captions": "<vtt file, optional>", "live": bool,
-//!  "broken_until_update": bool, "always_broken": bool, "update_fails": bool, "bad_first_cut": bool, "bad_cuts": bool}.
+//!  "broken_until_update": bool, "always_broken": bool, "private": bool, "update_fails": bool, "update_hangs": bool, "bad_first_cut": bool, "bad_cuts": bool}.
 //! Every call is appended to `<exe>.state/calls.log`; `-U` calls and cuts are counted in `updates` and `cuts`.
 
 use serde_json::{json, Value};
@@ -25,12 +25,19 @@ fn main() {
 
     if args.first().map(String::as_str) == Some("-U") {
         bump("updates");
+        if flag("update_hangs") {
+            std::thread::sleep(std::time::Duration::from_secs(30));
+        }
         if flag("update_fails") {
             eprintln!("ERROR: unable to update");
             exit(1);
         }
         println!("yt-dlp is up to date");
         return;
+    }
+    if flag("private") {
+        eprintln!("ERROR: [youtube] abc: Private video. Sign in if you've been granted access to this video");
+        exit(1);
     }
     if flag("always_broken") || (flag("broken_until_update") && count("updates") == 0) {
         eprintln!("ERROR: [youtube] abc: Unable to extract player response; please report this issue");

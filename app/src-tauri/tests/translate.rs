@@ -3,6 +3,7 @@
 mod common;
 
 use common::{fixtures, FakeGemini};
+use cruxvid_lib::clip_range;
 use cruxvid_lib::engine::{Engine, EngineConfig};
 use std::path::Path;
 
@@ -86,6 +87,62 @@ fn failed_translation_keeps_the_original_and_reports_the_error() {
     assert_eq!(dead.caption(&p.id, &p.clips[0].id).unwrap(), before);
     assert_eq!(dead.load_project(&p.id).unwrap(), p);
     assert_eq!(dead.clip_language(&p.id, &p.clips[0].id).unwrap(), "");
+}
+
+#[test]
+fn an_edit_made_while_another_clip_is_translating_is_kept() {
+    let tmp = tempfile::tempdir().unwrap();
+    let p = engine(tmp.path(), &FakeGemini::start().base_url).analyze(&fixtures().join("source.mp4")).unwrap();
+    let slow = std::sync::Arc::new(engine(tmp.path(), &FakeGemini::start_slow(std::time::Duration::from_millis(1500)).base_url));
+
+    let worker = {
+        let (e, pid, id) = (slow.clone(), p.id.clone(), p.clips[1].id.clone());
+        std::thread::spawn(move || e.set_clip_language(&pid, &id, "en").unwrap())
+    };
+    std::thread::sleep(std::time::Duration::from_millis(500));
+    slow.edit_clip_text(&p.id, &p.clips[0].id, "Edited meanwhile", "d").unwrap();
+    worker.join().unwrap();
+
+    let after = slow.load_project(&p.id).unwrap();
+    assert_eq!(after.clips[0].title, "Edited meanwhile");
+    assert_eq!(after.clips[1].title, "Translated title");
+}
+
+#[test]
+fn a_trim_made_while_the_clip_is_translating_wins_and_the_stale_translation_is_refused() {
+    let tmp = tempfile::tempdir().unwrap();
+    let p = engine(tmp.path(), &FakeGemini::start().base_url).analyze(&fixtures().join("source.mp4")).unwrap();
+    let slow = std::sync::Arc::new(engine(tmp.path(), &FakeGemini::start_slow(std::time::Duration::from_millis(1500)).base_url));
+    let c = p.clips[0].clone();
+
+    let worker = {
+        let (e, pid, id) = (slow.clone(), p.id.clone(), c.id.clone());
+        std::thread::spawn(move || e.set_clip_language(&pid, &id, "en"))
+    };
+    std::thread::sleep(std::time::Duration::from_millis(500));
+    clip_range::set_range(&slow, &p.id, &c.id, c.start + 1.0, c.end).unwrap();
+
+    assert!(worker.join().unwrap().is_err(), "words timed for the old range must not be saved");
+    assert_eq!(slow.load_project(&p.id).unwrap().clips[0].start, c.start + 1.0);
+    assert_eq!(slow.clip_language(&p.id, &c.id).unwrap(), "");
+}
+
+#[test]
+fn trimming_a_translated_clip_drops_its_translation_so_the_caption_is_timed_for_the_new_range() {
+    let tmp = tempfile::tempdir().unwrap();
+    let e = engine(tmp.path(), &FakeGemini::start().base_url);
+    let p = e.analyze(&fixtures().join("source.mp4")).unwrap();
+    let c = &p.clips[0];
+    e.set_clip_language(&p.id, &c.id, "en").unwrap();
+    assert!(e.caption_ass(&p.id, &c.id).unwrap().contains("translated"));
+
+    clip_range::set_range(&e, &p.id, &c.id, c.start, c.end - 1.0).unwrap();
+
+    assert_eq!(e.clip_language(&p.id, &c.id).unwrap(), "");
+    let ass = e.caption_ass(&p.id, &c.id).unwrap();
+    assert!(ass.contains("alpha") && !ass.contains("translated"), "{ass}");
+    let words = e.caption(&p.id, &c.id).unwrap().words;
+    assert!(words.iter().all(|w| w.start < c.end - 1.0), "{words:?}");
 }
 
 #[test]

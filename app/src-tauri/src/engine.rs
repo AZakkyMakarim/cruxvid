@@ -1,9 +1,9 @@
 //! Engine: the public seam (Analyze, Export). Orchestrates the concern modules; holds no UI knowledge.
 
-use crate::{caption::{self, CaptionStore, CaptionStyle, ClipCaption}, clips, export, faces, gemini::{self, GeminiClient}, layout::Layout, layout_store::{self, LayoutStore}, project::{Project, ProjectStore}, settings::{self, KeyStore}, source, speaker, ytdlp};
+use crate::{caption::{self, CaptionStore, CaptionStyle, ClipCaption}, clips, export, faces, gemini::{self, GeminiClient}, layout::Layout, layout_store::{self, LayoutStore}, fsutil, project::{Project, ProjectStore}, settings::{self, KeyStore}, source, speaker, ytdlp};
 use crate::{output_folder::OutputFolder, queue::{Job, JobQueue}};
 use serde::Serialize;
-use std::{path::{Path, PathBuf}, sync::{Arc, Mutex}, time::Duration};
+use std::{collections::HashMap, path::{Path, PathBuf}, sync::{Arc, Mutex}, time::{Duration, Instant}};
 
 pub struct EngineConfig {
     pub data_dir: PathBuf,
@@ -50,7 +50,13 @@ pub struct Engine {
     cut_lock: Mutex<()>,
     /// Test mode: Clips whose next queued Export fails once (see `fail_once`).
     fail_once: Mutex<Vec<String>>,
+    /// The unsaved Full fallback Layout of a Clip (two faces, no usable speaker info) per (Project, Clip) and range,
+    /// so scrubbing the preview does not re-run face detection and the Gemini upload on every call.
+    fallback: Mutex<HashMap<(String, String), ((f64, f64), Instant, Layout)>>,
 }
+
+/// How long a fallback Layout is reused: long enough for a scrub, short enough that a network that came back is noticed.
+const FALLBACK_TTL: Duration = Duration::from_secs(60);
 
 impl Engine {
     pub fn new(cfg: EngineConfig) -> Self {
@@ -78,6 +84,7 @@ impl Engine {
             data_dir: cfg.data_dir,
             output,
             fail_once: Mutex::new(Vec::new()),
+            fallback: Mutex::new(HashMap::new()),
         }
     }
 
@@ -92,6 +99,12 @@ impl Engine {
         self
     }
 
+    /// How long `yt-dlp -U` may run before it is killed (default 60 s).
+    pub fn with_ytdlp_update_timeout(mut self, timeout: Duration) -> Self {
+        self.ytdlp = self.ytdlp.with_update_timeout(timeout);
+        self
+    }
+
     pub fn ai_status(&self) -> AiStatus {
         let has_key = self.keys.as_ref().is_some_and(|k| matches!(k.get(), Ok(Some(_))));
         AiStatus { has_key, model: self.model.lock().unwrap().clone() }
@@ -102,10 +115,13 @@ impl Engine {
         if key.is_empty() {
             return Err("API key tidak boleh kosong.".into());
         }
-        self.keys.as_ref().ok_or("Penyimpanan key tidak tersedia.")?.set(key)
+        self.keys.as_ref().ok_or("Penyimpanan key tidak tersedia.")?.set(key)?;
+        fsutil::lock(&self.fallback).clear();
+        Ok(())
     }
 
     pub fn clear_api_key(&self) -> Result<(), String> {
+        fsutil::lock(&self.fallback).clear();
         self.keys.as_ref().map_or(Ok(()), |k| k.clear())
     }
 
@@ -170,8 +186,8 @@ impl Engine {
         let p = self.store.load(project_id)?;
         let clip = p.clips.iter().find(|c| c.id == clip_id).ok_or_else(|| format!("Clip not found: {clip_id}"))?;
         let (media, view) = self.clip_media(project_id, &p, clip)?;
-        let vf = self.clip_layout(project_id, clip_id)?.filter(export::export_fps(media.fps));
-        let ass = self.caption_ass(project_id, clip_id)?;
+        let vf = self.layout_with(project_id, clip, || Ok((media.clone(), view.clone())))?.filter(export::export_fps(media.fps));
+        let ass = caption::ass(clip, &self.caption_for(project_id, &p, clip));
         export::export_clip_with(&media, &view, &self.output.get(), Some(&vf), Some(&ass))
     }
 
@@ -179,7 +195,7 @@ impl Engine {
     pub fn caption_ass(&self, project_id: &str, clip_id: &str) -> Result<String, String> {
         let p = self.store.load(project_id)?;
         let clip = p.clips.iter().find(|c| c.id == clip_id).ok_or_else(|| format!("Clip not found: {clip_id}"))?;
-        Ok(caption::ass(clip, &self.caption(project_id, clip_id)?))
+        Ok(caption::ass(clip, &self.caption_for(project_id, &p, clip)))
     }
 
     /// Translates one Clip's Caption, title and description ("" = back to the original). Other Clips are untouched;
@@ -268,35 +284,47 @@ impl Engine {
     pub fn caption(&self, project_id: &str, clip_id: &str) -> Result<ClipCaption, String> {
         let p = self.store.load(project_id)?;
         let clip = p.clips.iter().find(|c| c.id == clip_id).ok_or_else(|| format!("Clip not found: {clip_id}"))?;
+        Ok(self.caption_for(project_id, &p, clip))
+    }
+
+    fn caption_for(&self, project_id: &str, p: &Project, clip: &clips::Clip) -> ClipCaption {
         let view = self.captions.load(project_id).view(&p.transcript, clip);
-        Ok(crate::translate::overlay(view, self.translations.load(project_id).get(clip_id)))
+        crate::translate::overlay(view, self.translations.load(project_id).get(&clip.id))
     }
 
     pub fn set_caption_style(&self, project_id: &str, clip_id: &str, style: CaptionStyle) -> Result<ClipCaption, String> {
         self.store.load(project_id)?; // validates the id
-        let mut state = self.captions.load(project_id);
-        state.set_style(clip_id, style)?;
-        self.captions.save(project_id, &state)?;
+        self.captions.update(project_id, |state| state.set_style(clip_id, style))?;
         self.caption(project_id, clip_id)
     }
 
     /// Corrects one Transcript word; returns the text now shown (the original when `text` is empty).
     pub fn correct_caption_word(&self, project_id: &str, index: usize, text: &str) -> Result<String, String> {
         let p = self.store.load(project_id)?;
-        let mut state = self.captions.load(project_id);
-        let shown = state.correct(&p.transcript, index, text)?;
-        self.captions.save(project_id, &state)?;
-        Ok(shown)
+        self.captions.update(project_id, |state| state.correct(&p.transcript, index, text))
     }
 
     /// The Clip's Layout. First call detects faces in the Clip and picks the initial preset; the result is saved.
     pub fn clip_layout(&self, project_id: &str, clip_id: &str) -> Result<Layout, String> {
         let p = self.store.load(project_id)?;
         let clip = p.clips.iter().find(|c| c.id == clip_id).ok_or_else(|| format!("Clip not found: {clip_id}"))?;
+        self.layout_with(project_id, clip, || self.clip_media(project_id, &p, clip))
+    }
+
+    /// `clip_layout` for a Project and Clip already loaded; `media` is only called when the Layout must be detected.
+    fn layout_with(&self, project_id: &str, clip: &clips::Clip, media: impl FnOnce() -> Result<(source::Source, clips::Clip), String>) -> Result<Layout, String> {
+        let clip_id = &clip.id;
         if let Some(l) = self.layouts.get(project_id, clip_id)? {
             return Ok(l);
         }
-        let (media, view) = self.clip_media(project_id, &p, clip)?;
+        let key = (project_id.to_string(), clip_id.clone());
+        let range = (clip.start, clip.end);
+        if let Some((r, at, l)) = fsutil::lock(&self.fallback).get(&key) {
+            if *r == range && at.elapsed() < FALLBACK_TTL {
+                return Ok(l.clone());
+            }
+        }
+        let (media, view) = media()?;
         let found = faces::detect_clip_faces(&media, view.start, view.end)?;
         if found.len() < 2 {
             let layout = Layout::auto(&found, media.width, media.height);
@@ -307,7 +335,9 @@ impl Engine {
         // not saved (it is not a user choice), so the next open asks again.
         let keys = self.client().and_then(|g| speaker::detect_turns(&g, &media, &view)).map(|t| speaker::follow_keys(&found, &t)).unwrap_or_default();
         let layout = Layout::auto_following(&found, keys, media.width, media.height);
-        if !layout.follow.is_empty() {
+        if layout.follow.is_empty() {
+            fsutil::lock(&self.fallback).insert(key, (range, Instant::now(), layout.clone()));
+        } else {
             self.layouts.put(project_id, clip_id, &layout)?;
         }
         Ok(layout)
@@ -328,7 +358,8 @@ impl Engine {
 
     /// Another preset for the Clip; no new detection, no render.
     pub fn set_layout_preset(&self, project_id: &str, clip_id: &str, preset: &str) -> Result<Layout, String> {
-        let layout = self.clip_layout(project_id, clip_id)?.with_preset(preset)?;
+        let mut layout = self.clip_layout(project_id, clip_id)?.with_preset(preset)?;
+        layout.user = true;
         self.layouts.put(project_id, clip_id, &layout)?;
         Ok(layout)
     }
@@ -337,6 +368,7 @@ impl Engine {
     pub fn shift_layout_pane(&self, project_id: &str, clip_id: &str, pane: usize, dx: f64, dy: f64) -> Result<Layout, String> {
         let mut layout = self.clip_layout(project_id, clip_id)?;
         layout.shift_pane(pane, dx, dy)?;
+        layout.user = true;
         self.layouts.put(project_id, clip_id, &layout)?;
         Ok(layout)
     }
@@ -355,7 +387,7 @@ impl Engine {
         if !ytdlp::is_link(&p.source.path) {
             return Ok((p.source.clone(), clip.clone()));
         }
-        let _one_cut_at_a_time = self.cut_lock.lock().unwrap();
+        let _one_cut_at_a_time = fsutil::lock(&self.cut_lock);
         let name = format!("{}_{}_{}", clip.id, (clip.start * 1000.0).round(), (clip.end * 1000.0).round());
         let dir = self.data_dir.join("cuts").join(project_id);
         let cut = self.ytdlp.cut(&p.source.path, clip.start, clip.end, p.source.duration, &dir, &name)?;

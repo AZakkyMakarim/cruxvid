@@ -119,6 +119,7 @@ export function attachClipRange(li, project, clip, onChange) {
       end.value = timeText(clip.end);
       warning.textContent = saved.warning ? strings.rangeWarnings[saved.warning] : '';
       warning.dataset.warning = saved.warning ?? '';
+      li.querySelector('.clip-language')?.dispatchEvent(new Event('refresh-language')); // a trim drops the translation
       onChange(clip);
     } catch (err) {
       error.textContent = errorText(err);

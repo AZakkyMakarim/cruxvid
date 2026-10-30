@@ -17,6 +17,11 @@ pub struct FakeGemini {
 impl FakeGemini {
     /// Serves forever on a background thread; routes on the `CRUXVID_TASK:` marker in the prompt.
     pub fn start() -> Self {
+        Self::start_slow(std::time::Duration::ZERO)
+    }
+
+    /// Like `start`, but every answer takes `delay` (so a test can change things while a Gemini call is in flight).
+    pub fn start_slow(delay: std::time::Duration) -> Self {
         let listener = TcpListener::bind("127.0.0.1:0").unwrap();
         let base_url = format!("http://{}", listener.local_addr().unwrap());
         std::thread::spawn(move || {
@@ -24,6 +29,7 @@ impl FakeGemini {
                 let Ok(mut s) = stream else { continue };
                 std::thread::spawn(move || {
                     let body = read_request_body(&mut s);
+                    std::thread::sleep(delay);
                     let file = if body.contains("CRUXVID_TASK: transcribe") {
                         "gemini_transcribe_response.json"
                     } else if body.contains("CRUXVID_TASK: translate") {

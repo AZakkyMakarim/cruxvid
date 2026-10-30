@@ -74,6 +74,20 @@ fn output_folder_is_chosen_persisted_and_opened() {
 }
 
 #[test]
+fn exports_with_the_same_name_from_another_project_never_overwrite_each_other() {
+    let tmp = tempfile::tempdir().unwrap();
+    let e = engine(tmp.path(), &FakeGemini::start());
+    let src = fixtures().join("source.mp4");
+    let (a, b) = (e.analyze(&src).unwrap(), e.analyze(&src).unwrap());
+
+    let first = e.export(&a.id, &a.clips[0].id).unwrap();
+    let second = e.export(&b.id, &b.clips[0].id).unwrap();
+
+    assert_ne!(first, second);
+    assert_eq!(files(&tmp.path().join("out")), ["source_01_First topic (2).mp4", "source_01_First topic.mp4"]);
+}
+
+#[test]
 fn jobs_left_running_by_a_closed_app_come_back_as_waiting() {
     let tmp = tempfile::tempdir().unwrap();
     let gemini = FakeGemini::start();

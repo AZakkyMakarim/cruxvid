@@ -17,7 +17,13 @@ export function initClipLanguage(project) {
     row.append(label);
 
     let current = '';
-    getClipLanguage(project.id, clip.id).then((l) => (select.value = current = l)).catch(() => {});
+    const refresh = () => getClipLanguage(project.id, clip.id).then((l) => (select.value = current = l)).catch(() => {});
+    refresh();
+    // Trimming the Clip drops its translation (the words were timed for the old range): show what it has now.
+    select.addEventListener('refresh-language', () => {
+      refresh();
+      document.getElementById('caption-panel')?.replaceChildren();
+    });
     select.addEventListener('change', async () => {
       select.disabled = true;
       status.textContent = strings.translating;
