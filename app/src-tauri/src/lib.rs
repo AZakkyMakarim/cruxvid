@@ -19,6 +19,8 @@ pub mod project;
 pub mod queue;
 pub mod settings;
 pub mod source;
+pub mod speaker;
+mod speaker_commands;
 mod tools;
 pub mod transcript;
 pub mod vtt;
@@ -85,7 +87,9 @@ pub fn run() {
             export_queue_commands::open_output_dir,
             arrange::arrange_clips,
             clip_text_commands::edit_clip_text,
-            clip_text_commands::regenerate_clip_text
+            clip_text_commands::regenerate_clip_text,
+            speaker_commands::get_layout_at,
+            speaker_commands::get_clip_frame_at
         ])
         .run(tauri::generate_context!())
         .expect("error while running cruxvid");

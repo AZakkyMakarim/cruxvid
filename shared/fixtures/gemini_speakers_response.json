@@ -1,0 +1,16 @@
+{
+ "candidates": [
+  {
+   "content": {
+    "parts": [
+     {
+      "text": "{\"turns\":[{\"start\":0,\"end\":18,\"position\":0.26},{\"start\":18,\"end\":40,\"position\":0.75},{\"start\":40,\"end\":46,\"position\":null},{\"start\":46,\"end\":46.5,\"position\":0.26},{\"start\":46.5,\"end\":60,\"position\":0.75},{\"start\":60,\"end\":79.4,\"position\":0.26}]}"
+     }
+    ],
+    "role": "model"
+   },
+   "finishReason": "STOP",
+   "index": 0
+  }
+ ]
+}

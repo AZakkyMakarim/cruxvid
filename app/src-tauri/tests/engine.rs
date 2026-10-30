@@ -101,6 +101,7 @@ fn shared_fixtures_match_json_schemas() {
         ("schema/transcript.schema.json", load("fixtures/transcript.json")),
         ("schema/transcript.schema.json", envelope_text("fixtures/gemini_transcribe_response.json")),
         ("schema/analysis.schema.json", envelope_text("fixtures/gemini_analyze_response.json")),
+        ("schema/speakers.schema.json", envelope_text("fixtures/gemini_speakers_response.json")),
     ] {
         let validator = jsonschema::validator_for(&load(schema)).unwrap();
         assert!(validator.is_valid(&instance), "{schema} rejects fixture");

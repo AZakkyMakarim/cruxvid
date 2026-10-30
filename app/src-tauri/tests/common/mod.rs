@@ -28,6 +28,8 @@ impl FakeGemini {
                         "gemini_transcribe_response.json"
                     } else if body.contains("CRUXVID_TASK: describe") {
                         "gemini_describe_response.json"
+                    } else if body.contains("CRUXVID_TASK: speakers") {
+                        "gemini_speakers_response.json"
                     } else {
                         "gemini_analyze_response.json"
                     };

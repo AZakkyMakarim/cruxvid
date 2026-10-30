@@ -35,3 +35,6 @@ body { font-family: system-ui, sans-serif; margin: 1rem 1.5rem; }
 .clip-text-field { display: flex; gap: .4rem; align-items: start; }
 .clip-title-input, .clip-desc-input { flex: 1; }
 .clip-text-status[data-error="true"] { color: #b00020; }
+.speaker-scrub-label { display: block; margin: .25rem 0; }
+.speaker-scrub { width: 270px; vertical-align: middle; }
+.speaker-scrub-label[hidden] { display: none; }
