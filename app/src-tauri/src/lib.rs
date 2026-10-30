@@ -1,3 +1,5 @@
+mod ai_commands;
+pub mod audio;
 pub mod clips;
 mod commands;
 pub mod config;
@@ -5,6 +7,7 @@ pub mod engine;
 pub mod export;
 pub mod gemini;
 pub mod project;
+pub mod settings;
 pub mod source;
 mod tools;
 pub mod transcript;
@@ -21,19 +24,30 @@ pub fn run() {
         .setup(|app| {
             let cfg = app.state::<AppConfig>().inner().clone();
             let paths = app.path();
-            let engine = Engine::new(EngineConfig {
-                data_dir: cfg.data_dir.map_or_else(|| paths.app_data_dir(), Ok)?,
-                output_dir: cfg.output_dir.map_or_else(|| paths.video_dir().map(|d| d.join("Cruxvid")), Ok)?,
-                gemini_base_url: cfg.gemini_base_url,
-                model: gemini::DEFAULT_MODEL.to_string(),
-            });
+            let keys = settings::key_store_for(&cfg);
+            let timeout = cfg.gemini_timeout_ms.map_or(gemini::DEFAULT_TIMEOUT, std::time::Duration::from_millis);
+            let engine = Engine::with_key_store(
+                EngineConfig {
+                    data_dir: cfg.data_dir.map_or_else(|| paths.app_data_dir(), Ok)?,
+                    output_dir: cfg.output_dir.map_or_else(|| paths.video_dir().map(|d| d.join("Cruxvid")), Ok)?,
+                    gemini_base_url: cfg.gemini_base_url,
+                    model: gemini::DEFAULT_MODEL.to_string(),
+                },
+                keys,
+            )
+            .with_timeout(timeout);
             app.manage(Arc::new(engine));
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
             commands::get_config,
             commands::analyze_source,
-            commands::export_clip
+            commands::export_clip,
+            ai_commands::ai_status,
+            ai_commands::save_api_key,
+            ai_commands::clear_api_key,
+            ai_commands::set_model,
+            ai_commands::estimate_tokens
         ])
         .run(tauri::generate_context!())
         .expect("error while running cruxvid");

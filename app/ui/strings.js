@@ -13,3 +13,20 @@ export const strings = {
   exporting: 'Exporting...',
   exported: (p) => `Saved ${p}`,
 };
+
+Object.assign(strings, {
+  settings: 'Settings',
+  model: 'Gemini model',
+  saveModel: 'Save model',
+  modelSaved: 'Model saved.',
+  keyTitle: 'Gemini API key needed',
+  keyHelp: 'AI analysis uses your own Gemini API key. It is stored in the Windows Credential Manager.',
+  keySave: 'Save key',
+  keyCancel: 'Cancel',
+  keyChange: 'Change key',
+  keyRemove: 'Remove key',
+  keySet: 'An API key is saved.',
+  keyUnset: 'No API key saved. Everything except AI analysis works without one.',
+  tokenEstimate: (e) =>
+    `Estimated Gemini usage: about ${e.total.toLocaleString('en-US')} tokens (${e.input.toLocaleString('en-US')} in, ${e.output.toLocaleString('en-US')} out) for ${Math.round(e.duration / 60)} min of video.`,
+});

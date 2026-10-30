@@ -28,6 +28,13 @@ pub struct AppConfig {
     pub data_dir: Option<PathBuf>,
     #[serde(skip)]
     pub output_dir: Option<PathBuf>,
+    /// Test-mode only: Gemini request timeout in ms (else the 300 s default).
+    #[serde(skip)]
+    pub gemini_timeout_ms: Option<u64>,
+    /// Test-mode only: the API key the in-memory key store starts with. Unset -> "test-key" so UI flows that
+    /// are not about keys just work; set empty -> no key (first-use dialog). Never read outside test mode.
+    #[serde(skip)]
+    pub test_api_key: Option<String>,
 }
 
 impl AppConfig {
@@ -40,6 +47,8 @@ impl AppConfig {
             source_resolver: SourceResolver::Real,
             data_dir: None,
             output_dir: None,
+            gemini_timeout_ms: None,
+            test_api_key: None,
         };
         if test_mode {
             if let Some(url) = env("CRUXVID_GEMINI_BASE_URL").filter(|u| !u.is_empty()) {
@@ -50,6 +59,8 @@ impl AppConfig {
             }
             cfg.data_dir = env("CRUXVID_DATA_DIR").filter(|v| !v.is_empty()).map(PathBuf::from);
             cfg.output_dir = env("CRUXVID_OUTPUT_DIR").filter(|v| !v.is_empty()).map(PathBuf::from);
+            cfg.gemini_timeout_ms = env("CRUXVID_GEMINI_TIMEOUT_MS").and_then(|v| v.parse().ok());
+            cfg.test_api_key = Some(env("CRUXVID_TEST_API_KEY").unwrap_or_else(|| "test-key".into()));
         }
         cfg
     }
@@ -120,6 +131,18 @@ mod tests {
         let on = cfg(&vars);
         assert_eq!(on.data_dir, Some(PathBuf::from("D:/d")));
         assert_eq!(on.output_dir, Some(PathBuf::from("D:/o")));
+    }
+
+    #[test]
+    fn ai_test_overrides_only_in_test_mode() {
+        let vars = [("CRUXVID_GEMINI_TIMEOUT_MS", "250"), ("CRUXVID_TEST_API_KEY", "")];
+        let off = cfg(&vars);
+        assert_eq!((off.gemini_timeout_ms, off.test_api_key), (None, None));
+        let mut on_vars = vars.to_vec();
+        on_vars.push(("CRUXVID_TEST_MODE", "1"));
+        let on = cfg(&on_vars);
+        assert_eq!((on.gemini_timeout_ms, on.test_api_key.as_deref()), (Some(250), Some("")));
+        assert_eq!(cfg(&[("CRUXVID_TEST_MODE", "1")]).test_api_key.as_deref(), Some("test-key"));
     }
 
     #[test]

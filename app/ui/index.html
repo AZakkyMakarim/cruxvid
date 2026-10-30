@@ -14,6 +14,7 @@
     <input id="source-path" type="text" spellcheck="false">
     <button id="browse-btn" type="button"></button>
     <button id="analyze-btn" type="button"></button>
+    <p id="token-estimate" role="status"></p>
     <p id="status" role="status"></p>
     <p id="error" role="alert"></p>
   </section>
@@ -22,6 +23,28 @@
     <h2 data-i18n="clips"></h2>
     <ul id="clip-list"></ul>
   </section>
+
+  <section id="settings-panel">
+    <h2 data-i18n="settings"></h2>
+    <label id="model-label" for="model-input"></label>
+    <input id="model-input" type="text" spellcheck="false">
+    <button id="model-save" type="button"></button>
+    <span id="model-status" role="status"></span>
+    <p>
+      <span id="key-status" role="status"></span>
+      <button id="key-change" type="button"></button>
+      <button id="key-remove" type="button"></button>
+    </p>
+  </section>
+
+  <dialog id="key-dialog">
+    <h2 id="key-title"></h2>
+    <p id="key-help"></p>
+    <input id="key-input" type="password" autocomplete="off" spellcheck="false" aria-labelledby="key-title">
+    <p id="key-error" role="alert"></p>
+    <button id="key-save" type="button"></button>
+    <button id="key-cancel" type="button"></button>
+  </dialog>
 
   <footer id="diagnostics">
     <button id="test-btn" type="button">Run test</button>
