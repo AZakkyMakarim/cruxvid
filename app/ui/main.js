@@ -1,4 +1,5 @@
-import { initCaptionPanel } from './caption-panel.js';
+import { initCaptionPanel } from './caption-panel.js';
+import { initAiSettings } from './ai-settings.js';
 import { renderClips } from './clip-list.js';
 import { initDiagnostics } from './diagnostics.js';
 import { initSourcePanel } from './source-panel.js';
@@ -11,5 +12,6 @@ initSourcePanel({
     renderClips(project);
     initCaptionPanel(project);
   },
+  beforeAnalyze: initAiSettings(),
 });
 initDiagnostics();
