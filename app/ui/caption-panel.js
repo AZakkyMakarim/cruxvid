@@ -1,6 +1,7 @@
 // Caption panel: pick a preset, tweak style parameters (live preview, no re-render) and correct words.
 // Decorates the Clip rows rendered by clip-list.js with a Caption button.
 import { captionPresets, correctCaptionWord, getCaption, setCaptionStyle } from './api.js';
+import { errorText } from './i18n.js';
 import { strings } from './strings.js';
 
 const PREVIEW_SCALE = 0.25; // preview shows the 1080x1920 frame at 270x480
@@ -48,7 +49,7 @@ export async function openCaptionPanel(project, clip) {
     try {
       style = (await setCaptionStyle(project.id, clip.id, style)).style;
     } catch (e) {
-      error.textContent = String(e);
+      error.textContent = errorText(e);
     }
   };
   const repaint = () => paintPreview(preview, style, words);
@@ -74,7 +75,7 @@ export async function openCaptionPanel(project, clip) {
     return field(label, input);
   });
 
-  const preset = el('select', { id: 'caption-preset' }, ...presets.map((p) => el('option', { value: p.preset, textContent: p.preset })));
+  const preset = el('select', { id: 'caption-preset' }, ...presets.map((p) => el('option', { value: p.preset, textContent: strings.captionPresets[p.preset] ?? p.preset })));
   preset.value = style.preset;
   preset.addEventListener('change', () => {
     style = { ...presets.find((p) => p.preset === preset.value) };
@@ -96,7 +97,7 @@ export async function openCaptionPanel(project, clip) {
           input.value = w.text;
           repaint();
         } catch (e) {
-          error.textContent = String(e);
+          error.textContent = errorText(e);
           input.value = w.text;
         }
       });
@@ -122,7 +123,7 @@ export function initCaptionPanel(project) {
   document.querySelectorAll('#clip-list .clip').forEach((row, i) => {
     const clip = project.clips[i];
     const btn = el('button', { type: 'button', className: 'caption-btn', textContent: strings.caption });
-    btn.addEventListener('click', () => openCaptionPanel(project, clip).catch((e) => (document.getElementById('error').textContent = String(e))));
+    btn.addEventListener('click', () => openCaptionPanel(project, clip).catch((e) => (document.getElementById('error').textContent = errorText(e))));
     row.querySelector('.export-btn').before(btn);
   });
 }

@@ -75,6 +75,8 @@ pub fn run() {
             ai_commands::clear_api_key,
             ai_commands::set_model,
             ai_commands::estimate_tokens,
+            ai_commands::get_ui_prefs,
+            ai_commands::set_ui_prefs,
             commands::caption_presets,
             commands::get_caption,
             commands::set_caption_style,

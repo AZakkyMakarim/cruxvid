@@ -45,7 +45,11 @@ export async function startFakeGemini(): Promise<{ url: string; close: () => voi
 }
 
 /** Launch the real app with WebView2 remote debugging on, attach Playwright over CDP, run `fn`, always clean up. */
-export async function withApp<T>(extraEnv: Record<string, string>, fn: (page: Page) => Promise<T>): Promise<T> {
+export async function withApp<T>(
+  extraEnv: Record<string, string>,
+  fn: (page: Page) => Promise<T>,
+  systemLanguage = 'en-US', // what the app sees as the OS language; the specs assert English texts unless a Language is chosen
+): Promise<T> {
   const port = await freePort();
   // Own WebView2 profile per run: runs must not share (or inherit debug args from) a previous browser process.
   const userData = mkdtempSync(path.join(tmpdir(), 'cruxvid-e2e-'));
@@ -53,7 +57,7 @@ export async function withApp<T>(extraEnv: Record<string, string>, fn: (page: Pa
     env: {
       ...process.env,
       WEBVIEW2_USER_DATA_FOLDER: userData,
-      WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${port}`,
+      WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${port} --lang=${systemLanguage} --accept-lang=${systemLanguage}`,
       ...extraEnv,
     },
     stdio: 'ignore',

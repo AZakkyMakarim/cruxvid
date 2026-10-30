@@ -1,5 +1,6 @@
 // The only place the UI talks to the Rust Engine (Tauri commands).
-const { invoke } = window.__TAURI__.core;
+// Looked up per call, so tests can import this module in plain Node (see e2e/i18n.spec.ts).
+const invoke = (...args) => window.__TAURI__.core.invoke(...args);
 
 export const getConfig = () => invoke('get_config');
 export const analyzeSource = (path) => invoke('analyze_source', { path });
@@ -68,4 +69,7 @@ export const addManualClip = (projectId, start, end) => invoke('add_manual_clip'
 export const setClipRange = (projectId, clipId, start, end) => invoke('set_clip_range', { projectId, clipId, start, end });
 export const rangeWarning = (start, end) => invoke('range_warning', { start, end });
 export const clipPreview = (projectId, clipId) => invoke('clip_preview', { projectId, clipId });
-export const previewUrl = (path) => window.__TAURI__.core.convertFileSrc(path);
+// UI language and theme (cruxvid-b2t.18); "" = never chosen, follow the system.
+export const getUiPrefs = () => invoke('get_ui_prefs');
+export const setUiPrefs = (prefs) => invoke('set_ui_prefs', { prefs });
+export const previewUrl =(path) => window.__TAURI__.core.convertFileSrc(path);

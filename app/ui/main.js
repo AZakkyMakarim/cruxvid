@@ -8,12 +8,16 @@ import { initHistoryPanel } from './history-panel.js';
 import { initManualClip } from './manual-clip.js';
 import { initOutputPanel } from './output-panel.js';
 import { initQueuePanel } from './queue-panel.js';
+import { errorText, initI18n, onLanguageChange } from './i18n.js';
+import { openProject } from './api.js';
 import { initSourcePanel } from './source-panel.js';
-import { strings } from './strings.js';
 
-for (const el of document.querySelectorAll('[data-i18n]')) el.textContent = strings[el.dataset.i18n];
+await initI18n(); // language and theme first: every panel below reads `strings` while it is built
+
+let shown = null; // the Project on screen, if any
 
 function showProject(project, view) {
+  shown = project;
   renderClips(project);
   initClipArrange(project, view);
   initCaptionPanel(project);
@@ -44,3 +48,19 @@ initSourcePanel({
 });
 initDiagnostics();
 initOutputPanel();
+
+// Switching the UI language redraws what code built (Clip rows, panels, lists). The Project is read again from disk:
+// it is saved after every edit, and what is on screen but unsaved (typing, an open editor) is not worth keeping.
+onLanguageChange(async () => {
+  for (const id of ['status', 'error', 'token-estimate', 'history-error', 'queue-error', 'output-msg', 'manual-warning', 'manual-error']) {
+    document.getElementById(id).textContent = '';
+  }
+  history.refresh();
+  if (!shown) return;
+  try {
+    const reopened = await openProject(shown.id);
+    showProject(reopened.project, reopened.view);
+  } catch (e) {
+    document.getElementById('error').textContent = errorText(e);
+  }
+});

@@ -1,5 +1,6 @@
 // Settings: output folder for Exports, plus the "Open folder" button.
 import { getOutputDir, openOutputDir, pickFolder, setOutputDir } from './api.js';
+import { errorText } from './i18n.js';
 import { strings } from './strings.js';
 
 export async function initOutputPanel() {
@@ -9,7 +10,7 @@ export async function initOutputPanel() {
     try {
       msg.textContent = await action();
     } catch (e) {
-      msg.textContent = String(e);
+      msg.textContent = errorText(e);
     }
   };
 

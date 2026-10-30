@@ -97,7 +97,7 @@ test('a live link is rejected with a clear message and nothing is downloaded', a
   await run({ live: true }, true, async (page, { calls }) => {
     await page.fill('#source-path', 'https://www.twitch.tv/somechannel');
     await page.click('#analyze-btn');
-    await expect(page.locator('#error')).toContainText('masih live');
+    await expect(page.locator('#error')).toContainText('still live');
     await expect(page.locator('#clip-list .clip')).toHaveCount(0);
     expect(calls().filter((c) => c.includes('--download-sections') || c.includes('--skip-download'))).toHaveLength(0);
   });

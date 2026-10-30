@@ -1,6 +1,7 @@
 // Caption language of one Clip (cruxvid-b2t.12): pick a language and Caption, title and description of that Clip
 // are translated; other Clips stay as they are. "Original" goes back to the Transcript's language.
 import { getClipLanguage, setClipLanguage } from './api.js';
+import { errorText } from './i18n.js';
 import { strings } from './strings.js';
 
 /** Adds the language picker to each Clip row. */
@@ -30,7 +31,7 @@ export function initClipLanguage(project) {
         status.textContent = '';
       } catch (e) {
         select.value = current; // the Clip kept its Caption
-        status.textContent = String(e);
+        status.textContent = errorText(e);
         status.dataset.error = 'true';
       } finally {
         select.disabled = false;

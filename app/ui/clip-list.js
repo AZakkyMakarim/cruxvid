@@ -3,6 +3,7 @@ import { exportClip } from './api.js';
 import { attachClipText } from './clip-text.js';
 import { attachClipRange } from './clip-range.js';
 import { attachLayoutButton } from './layout-editor.js';
+import { errorText } from './i18n.js';
 import { strings } from './strings.js';
 
 const pad = (n) => String(n).padStart(2, '0');
@@ -40,7 +41,7 @@ export function renderClips(project) {
       try {
         result.textContent = strings.exported(await exportClip(project.id, clip.id));
       } catch (e) {
-        result.textContent = String(e);
+        result.textContent = errorText(e);
       } finally {
         btn.disabled = false;
       }

@@ -65,11 +65,11 @@ test('no key: dialog on first AI use, estimate shown, each error has its own mes
           await page.click('#analyze-btn');
         };
         await tryKey('bad-key');
-        await expect(page.locator('#error')).toContainText('Key tidak valid');
+        await expect(page.locator('#error')).toContainText('Invalid key');
         await tryKey('quota-key');
-        await expect(page.locator('#error')).toContainText('Kuota habis');
+        await expect(page.locator('#error')).toContainText('Quota used up');
         await tryKey('slow-key');
-        await expect(page.locator('#error')).toContainText('Jaringan bermasalah', { timeout: 20_000 });
+        await expect(page.locator('#error')).toContainText('Network problem', { timeout: 20_000 });
 
         // Model field is editable and used in requests.
         await page.fill('#model-input', 'my-model');

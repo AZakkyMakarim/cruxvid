@@ -1,5 +1,6 @@
 // Source panel: pick a local file and start analysis.
 import { analyzeSource, pickVideo } from './api.js';
+import { errorText } from './i18n.js';
 import { strings } from './strings.js';
 
 /**
@@ -11,10 +12,6 @@ export function initSourcePanel({ onProject, beforeAnalyze = async () => true })
   const analyze = document.getElementById('analyze-btn');
   const status = document.getElementById('status');
   const error = document.getElementById('error');
-
-  path.placeholder = strings.pathPlaceholder;
-  document.getElementById('browse-btn').textContent = strings.browse;
-  analyze.textContent = strings.analyze;
 
   document.getElementById('browse-btn').addEventListener('click', async () => {
     const picked = await pickVideo();
@@ -31,7 +28,7 @@ export function initSourcePanel({ onProject, beforeAnalyze = async () => true })
       status.textContent = '';
     } catch (e) {
       status.textContent = '';
-      error.textContent = String(e);
+      error.textContent = errorText(e);
     } finally {
       analyze.disabled = false;
     }
