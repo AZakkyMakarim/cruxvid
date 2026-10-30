@@ -5,6 +5,11 @@ use crate::{clips::Clip, source::Source, tools};
 use std::path::{Path, PathBuf};
 
 pub fn export_clip(source: &Source, clip: &Clip, out_dir: &Path) -> Result<PathBuf, String> {
+    export_clip_with(source, clip, out_dir, None)
+}
+
+/// `layout_vf`: ffmpeg graph from the Clip's Layout (see `layout::Layout::filter`); None = centre crop.
+pub fn export_clip_with(source: &Source, clip: &Clip, out_dir: &Path, layout_vf: Option<&str>) -> Result<PathBuf, String> {
     std::fs::create_dir_all(out_dir).map_err(|e| format!("Cannot create output folder: {e}"))?;
     let out = out_dir.join(file_name(&source.title, clip));
     let part = out.with_extension("part");
@@ -12,7 +17,7 @@ pub fn export_clip(source: &Source, clip: &Clip, out_dir: &Path) -> Result<PathB
     let result = tools::command("ffmpeg")
         .args(["-y", "-v", "error", "-ss", &format!("{:.3}", clip.start), "-i", &source.path])
         .args(["-t", &format!("{:.3}", clip.end - clip.start)])
-        .args(["-vf", &format!("scale=-2:1920,crop=1080:1920,fps={fps}"), "-fps_mode", "cfr"])
+        .args(["-vf", &format!("{},fps={fps}", layout_vf.unwrap_or("scale=-2:1920,crop=1080:1920")), "-fps_mode", "cfr"])
         .args(["-c:v", "libx264", "-profile:v", "high", "-pix_fmt", "yuv420p", "-preset", "veryfast"])
         .args(["-b:v", "8M", "-maxrate", "10M", "-bufsize", "16M", "-g", &(fps * 2).to_string()])
         .args(["-c:a", "aac", "-b:a", "128k", "-ar", "48000", "-movflags", "+faststart", "-f", "mp4"])
@@ -28,7 +33,7 @@ pub fn export_clip(source: &Source, clip: &Clip, out_dir: &Path) -> Result<PathB
 }
 
 /// Follows the Source frame rate, snapped to 30 or 60.
-fn export_fps(source_fps: f64) -> u32 {
+pub(crate) fn export_fps(source_fps: f64) -> u32 {
     if source_fps > 45.0 { 60 } else { 30 }
 }
 

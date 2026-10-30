@@ -3,7 +3,10 @@ mod commands;
 pub mod config;
 pub mod engine;
 pub mod export;
+pub mod faces;
 pub mod gemini;
+pub mod layout;
+pub mod layout_store;
 pub mod project;
 pub mod source;
 mod tools;
@@ -33,7 +36,12 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::get_config,
             commands::analyze_source,
-            commands::export_clip
+            commands::export_clip,
+            commands::layout_presets,
+            commands::get_layout,
+            commands::set_layout_preset,
+            commands::shift_layout_pane,
+            commands::get_clip_frame
         ])
         .run(tauri::generate_context!())
         .expect("error while running cruxvid");
