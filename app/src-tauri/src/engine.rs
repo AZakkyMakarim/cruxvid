@@ -109,6 +109,14 @@ impl Engine {
         self.keys.as_ref().map_or(Ok(()), |k| k.clear())
     }
 
+    pub fn ui_prefs(&self) -> settings::UiPrefs {
+        settings::load_ui(&self.data_dir)
+    }
+
+    pub fn set_ui_prefs(&self, prefs: settings::UiPrefs) -> Result<(), String> {
+        settings::save_ui(&self.data_dir, &prefs)
+    }
+
     pub fn set_model(&self, model: &str) -> Result<(), String> {
         let model = model.trim();
         if model.is_empty() {

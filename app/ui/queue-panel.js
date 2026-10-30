@@ -1,5 +1,6 @@
 // Export queue panel: pick Clips, Export them one after another, watch each job's status, retry failures.
 import { exportClips, exportJobs, retryFailedExports } from './api.js';
+import { errorText } from './i18n.js';
 import { strings } from './strings.js';
 
 const POLL_MS = 300;
@@ -55,7 +56,7 @@ export function initQueuePanel(project) {
         await new Promise((r) => setTimeout(r, POLL_MS));
       }
     } catch (e) {
-      error.textContent = String(e);
+      error.textContent = errorText(e);
     } finally {
       polling = false;
     }
@@ -67,7 +68,7 @@ export function initQueuePanel(project) {
       render(await start());
       poll();
     } catch (e) {
-      error.textContent = String(e);
+      error.textContent = errorText(e);
     }
   }
 

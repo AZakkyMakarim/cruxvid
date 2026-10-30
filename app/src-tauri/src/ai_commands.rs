@@ -31,3 +31,13 @@ pub async fn estimate_tokens(engine: State<'_, Arc<Engine>>, path: String) -> Re
         .await
         .map_err(|e| e.to_string())?
 }
+
+#[tauri::command]
+pub fn get_ui_prefs(engine: State<'_, Arc<Engine>>) -> crate::settings::UiPrefs {
+    engine.ui_prefs()
+}
+
+#[tauri::command]
+pub fn set_ui_prefs(engine: State<'_, Arc<Engine>>, prefs: crate::settings::UiPrefs) -> Result<(), String> {
+    engine.set_ui_prefs(prefs)
+}

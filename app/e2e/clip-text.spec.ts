@@ -52,7 +52,7 @@ test('edit title and Regenerate description change one Clip, persist in the Proj
         // Network gone: error shown, old text intact.
         gemini.close();
         await row(1).locator('.regen-desc-btn').click();
-        await expect(row(1).locator('.clip-text-status')).toContainText('Jaringan');
+        await expect(row(1).locator('.clip-text-status')).toContainText('Network problem');
         await expect(row(1).locator('.clip-desc-input')).toHaveValue(secondDesc);
         expect(projectFile()).toContain(secondDesc);
       },

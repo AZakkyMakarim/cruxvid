@@ -1,5 +1,6 @@
 // Title and description of one Clip: edit in place (Save), Regenerate per field. Other Clips are never touched.
 import { editClipText, regenerateClipText } from './api.js';
+import { errorText } from './i18n.js';
 import { strings } from './strings.js';
 
 function field(name, el, label) {
@@ -29,7 +30,7 @@ export function attachClipText(li, project, clip, titleEl) {
         status.textContent = strings.clipTextSaved;
         status.dataset.error = '';
       } catch (e) {
-        status.textContent = String(e); // old text stays in the fields
+        status.textContent = errorText(e); // old text stays in the fields
         status.dataset.error = 'true';
       } finally {
         buttons.forEach((x) => (x.disabled = false));

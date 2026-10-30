@@ -1,5 +1,6 @@
 // Project history: the saved Projects (Source title + date); opening one restores it from disk, no AI call.
 import { listProjects, openProject } from './api.js';
+import { errorText } from './i18n.js';
 import { strings } from './strings.js';
 
 const pad = (n) => String(n).padStart(2, '0');
@@ -27,7 +28,7 @@ export function initHistoryPanel({ onOpen }) {
             try {
               onOpen(await openProject(p.id));
             } catch (e) {
-              error.textContent = String(e); // a damaged Project file: message only, the app keeps working
+              error.textContent = errorText(e); // a damaged Project file: message only, the app keeps working
             }
           });
           const li = document.createElement('li');
@@ -41,11 +42,10 @@ export function initHistoryPanel({ onOpen }) {
         }),
       );
     } catch (e) {
-      error.textContent = String(e);
+      error.textContent = errorText(e);
     }
   }
 
-  document.getElementById('history-title').textContent = strings.history;
   refresh();
   return { refresh };
 }

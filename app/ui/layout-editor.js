@@ -3,6 +3,7 @@
 // All geometry comes from the Rust engine (shared/layout rules); this file only draws and forwards shifts.
 import { getClipFrame, getLayout, layoutPresets, setLayoutPreset, shiftLayoutPane } from './api.js';
 import { createSpeakerScrub } from './speaker-scrub.js';
+import { errorText } from './i18n.js';
 import { strings } from './strings.js';
 
 const CANVAS = { w: 1080, h: 1920 };
@@ -76,7 +77,7 @@ async function mountEditor(root, projectId, clipId, duration) {
     try {
       show(await p);
     } catch (e) {
-      notice.textContent = String(e);
+      notice.textContent = errorText(e);
     }
   };
 
@@ -94,7 +95,7 @@ async function mountEditor(root, projectId, clipId, duration) {
     }
     show(l);
   } catch (e) {
-    notice.textContent = String(e);
+    notice.textContent = errorText(e);
     return;
   }
 

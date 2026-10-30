@@ -87,3 +87,35 @@ pub fn save_model(data_dir: &Path, model: &str) -> Result<(), String> {
         .and_then(|_| std::fs::write(&file, v.to_string()))
         .map_err(|e| format!("Cannot save settings: {e}"))
 }
+
+/// UI language ("id" / "en") and theme ("dark" / "light"); "" means the user never chose, so the UI follows the system.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct UiPrefs {
+    pub language: String,
+    pub theme: String,
+}
+
+pub fn load_ui(data_dir: &Path) -> UiPrefs {
+    let v: serde_json::Value = std::fs::read(data_dir.join(SETTINGS_FILE)).ok().and_then(|b| serde_json::from_slice(&b).ok()).unwrap_or_default();
+    let pick = |key: &str, allowed: &[&str]| v[key].as_str().filter(|s| allowed.contains(s)).unwrap_or("").to_string();
+    UiPrefs { language: pick("ui_language", UI_LANGUAGES), theme: pick("ui_theme", UI_THEMES) }
+}
+
+const UI_LANGUAGES: &[&str] = &["id", "en"];
+const UI_THEMES: &[&str] = &["dark", "light"];
+
+pub fn save_ui(data_dir: &Path, prefs: &UiPrefs) -> Result<(), String> {
+    if !prefs.language.is_empty() && !UI_LANGUAGES.contains(&prefs.language.as_str()) {
+        return Err(format!("Unknown UI language: {}", prefs.language));
+    }
+    if !prefs.theme.is_empty() && !UI_THEMES.contains(&prefs.theme.as_str()) {
+        return Err(format!("Unknown theme: {}", prefs.theme));
+    }
+    let file = data_dir.join(SETTINGS_FILE);
+    let mut v: serde_json::Value = std::fs::read(&file).ok().and_then(|b| serde_json::from_slice(&b).ok()).unwrap_or_else(|| serde_json::json!({}));
+    v["ui_language"] = prefs.language.clone().into();
+    v["ui_theme"] = prefs.theme.clone().into();
+    std::fs::create_dir_all(data_dir)
+        .and_then(|_| std::fs::write(&file, v.to_string()))
+        .map_err(|e| format!("Cannot save settings: {e}"))
+}

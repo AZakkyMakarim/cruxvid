@@ -1,131 +1,331 @@
-// All user-visible text lives here so the UI-language ticket (cruxvid-b2t.18) can swap it per language.
-export const strings = {
+// All user-visible text lives here, once per UI language (cruxvid-b2t.18). Both tables must have exactly the same keys
+// (e2e/i18n.spec.ts checks it). UI code reads `strings.key`; the Proxy answers from the language that is active now.
+// The UI language is separate from the Caption language of a Clip (`languages` below only names that picker's options).
+
+const en = {
+  // Source panel
   source: 'Source',
   clips: 'Clips',
-  pathPlaceholder: 'Path to a local video file',
+  pathPlaceholder: 'Path to a local video file, or a YouTube / Twitch / video link',
   browse: 'Browse...',
   analyze: 'Analyze',
   analyzing: 'Analyzing...',
   noClips: 'Analysis finished but no Clip fits 60-120 s.',
-  clipsFound: (n) => `${n} Clip(s) found.`,
   hook: 'Hook score',
   export: 'Export',
   exporting: 'Exporting...',
   exported: (p) => `Saved ${p}`,
-};
+  runTest: 'Run test',
 
-// Caption panel.
+  // Caption panel
+  caption: 'Caption',
+  captionPreset: 'Preset',
+  captionPresets: { classic: 'classic', bold: 'bold', soft: 'soft', pop: 'pop' },
+  captionFont: 'Font',
+  captionSize: 'Size',
+  captionColor: 'Color',
+  captionHighlight: 'Highlight',
+  captionOutline: 'Outline',
+  captionPosition: 'Position',
+  captionWords: 'Words (edit to correct; empty restores the original)',
 
-strings.caption = 'Caption';
-
-strings.captionPreset = 'Preset';
-
-strings.captionFont = 'Font';
-
-strings.captionSize = 'Size';
-
-strings.captionColor = 'Color';
-
-strings.captionHighlight = 'Highlight';
-
-strings.captionOutline = 'Outline';
-
-strings.captionPosition = 'Position';
-
-strings.captionWords = 'Words (edit to correct; empty restores the original)';
-
-
-Object.assign(strings, {
-
+  // Settings: UI language and theme, Gemini
   settings: 'Settings',
-
+  uiLanguage: 'Language',
+  uiTheme: 'Theme',
+  themes: { system: 'Follow system', dark: 'Dark', light: 'Light' },
   model: 'Gemini model',
-
   saveModel: 'Save model',
-
   modelSaved: 'Model saved.',
-
   keyTitle: 'Gemini API key needed',
-
   keyHelp: 'AI analysis uses your own Gemini API key. It is stored in the Windows Credential Manager.',
+  keySave: 'Save key',
+  keyCancel: 'Cancel',
+  keyChange: 'Change key',
+  keyRemove: 'Remove key',
+  keySet: 'An API key is saved.',
+  keyUnset: 'No API key saved. Everything except AI analysis works without one.',
+  tokenEstimate: (e) =>
+    `Estimated Gemini usage: about ${e.total.toLocaleString('en-US')} tokens (${e.input.toLocaleString('en-US')} in, ${e.output.toLocaleString('en-US')} out) for ${Math.round(e.duration / 60)} min of video.`,
 
+  // Layout
   layout: 'Layout',
   layoutPresets: { focus: 'Focus', stack: 'Split top-bottom', webcam_game: 'Split person + game', full: 'Full' },
   layoutNotices: {
     no_face: 'No face found in this Clip, using Full layout.',
     multiple_faces: 'Several faces found, using Full layout. Pick a Layout to change it.',
+    follow_speaker: 'Following whoever speaks. Pick another Layout to change it.',
   },
   layoutHint: 'Drag a pane to move its crop, or focus it and use the arrow keys.',
-  keySave: 'Save key',
+  speakerScrub: 'Preview time (s)',
 
-  keyCancel: 'Cancel',
+  // Clip order and threshold
+  clipOrder: 'Order',
+  clipOrders: { timeline: 'Timeline', hook: 'Hook score' },
+  clipThreshold: 'Minimum Hook score',
 
-  keyChange: 'Change key',
+  // Export queue and output folder
+  queue: 'Export queue',
+  queueExportSelected: 'Export selected',
+  queueRetryFailed: 'Retry failed',
+  queueStatus: { waiting: 'Waiting', running: 'Running', done: 'Done', failed: 'Failed' },
+  outputFolder: 'Output folder',
+  outputBrowse: 'Browse...',
+  outputSave: 'Save',
+  openFolder: 'Open folder',
+  outputSaved: (p) => `Output folder: ${p}`,
+  folderOpened: (p) => `Opened ${p}`,
 
-  keyRemove: 'Remove key',
+  // Clip title and description
+  clipTitle: 'Title',
+  clipDescription: 'Description',
+  regenerate: 'Regenerate',
+  save: 'Save',
+  clipTextSaved: 'Saved.',
 
-  keySet: 'An API key is saved.',
+  // Project history
+  history: 'Projects',
+  historyOpen: 'Open',
 
-  keyUnset: 'No API key saved. Everything except AI analysis works without one.',
+  // Caption translation per Clip: the option labels of the Caption language picker
+  clipLanguage: 'Caption language',
+  languageOriginal: 'Original',
+  translating: 'Translating...',
+  languages: { English: 'English', Indonesian: 'Indonesian', Spanish: 'Spanish', French: 'French', German: 'German', Portuguese: 'Portuguese', Japanese: 'Japanese', Korean: 'Korean', Chinese: 'Chinese' },
 
-  tokenEstimate: (e) =>
+  // Preview, trim and manual Clips
+  manualOpen: 'Open without analysis',
+  manualAdd: 'Add Clip',
+  preview: 'Preview',
+  rangeStart: 'Start',
+  rangeEnd: 'End',
+  rangeApply: 'Apply range',
+  badTime: 'Enter a time like 95 or 1:35.',
+  previewFailed: 'Cannot play this video here.',
+  rangeWarnings: {
+    too_short: 'Shorter than 60 s. It can still be exported.',
+    too_long: 'Longer than 120 s. It can still be exported.',
+  },
 
-    `Estimated Gemini usage: about ${e.total.toLocaleString('en-US')} tokens (${e.input.toLocaleString('en-US')} in, ${e.output.toLocaleString('en-US')} out) for ${Math.round(e.duration / 60)} min of video.`,
-
-});
-
-
-// Clip order and threshold.
-strings.clipOrder = 'Order';
-strings.clipOrders = { timeline: 'Timeline', hook: 'Hook score' };
-strings.clipThreshold = 'Minimum Hook score';
-
-// Export queue and output folder.
-strings.queue = 'Export queue';
-strings.queueExportSelected = 'Export selected';
-strings.queueRetryFailed = 'Retry failed';
-strings.queueStatus = { waiting: 'Waiting', running: 'Running', done: 'Done', failed: 'Failed' };
-strings.outputFolder = 'Output folder';
-strings.outputBrowse = 'Browse...';
-strings.outputSave = 'Save';
-strings.openFolder = 'Open folder';
-strings.outputSaved = (p) => `Output folder: ${p}`;
-strings.folderOpened = (p) => `Opened ${p}`;
-
-
-// Source from a link (cruxvid-b2t.8).
-strings.pathPlaceholder = 'Path to a local video file, or a YouTube / Twitch / video link';
-
-// Clip title and description.
-strings.clipTitle = 'Title';
-strings.clipDescription = 'Description';
-strings.regenerate = 'Regenerate';
-strings.save = 'Save';
-strings.clipTextSaved = 'Saved.';
-
-// Speaker follow (cruxvid-b2t.14).
-strings.layoutNotices.follow_speaker = 'Following whoever speaks. Pick another Layout to change it.';
-strings.speakerScrub = 'Preview time (s)';
-// Project history.
-strings.history = 'Projects';
-strings.historyOpen = 'Open';
-
-// Caption translation per Clip (cruxvid-b2t.12).
-strings.clipLanguage = 'Caption language';
-strings.languageOriginal = 'Original';
-strings.translating = 'Translating...';
-strings.languages = { English: 'English', Indonesian: 'Indonesian', Spanish: 'Spanish', French: 'French', German: 'German', Portuguese: 'Portuguese', Japanese: 'Japanese', Korean: 'Korean', Chinese: 'Chinese' };
-
-// Preview, trim and manual Clips (cruxvid-b2t.17).
-strings.manualOpen = 'Open without analysis';
-strings.manualAdd = 'Add Clip';
-strings.preview = 'Preview';
-strings.rangeStart = 'Start';
-strings.rangeEnd = 'End';
-strings.rangeApply = 'Apply range';
-strings.badTime = 'Enter a time like 95 or 1:35.';
-strings.previewFailed = 'Cannot play this video here.';
-strings.rangeWarnings = {
-  too_short: 'Shorter than 60 s. It can still be exported.',
-  too_long: 'Longer than 120 s. It can still be exported.',
+  // Messages the Rust engine sends (it always speaks one fixed language); errorText() in i18n.js maps them to these.
+  // The parts after a colon (`detail`) come from the operating system or a tool and stay as they are.
+  errors: {
+    ffmpegMissing: (d) => `Cannot run ffmpeg (is it installed?): ${d}`,
+    ffprobeMissing: (d) => `Cannot run ffprobe (is ffmpeg installed?): ${d}`,
+    noAudio: () => 'Cannot read the audio of this video (does it have a sound track?).',
+    tooLong: () => 'This video is too long to send to Gemini in one piece (limit is about 90 minutes).',
+    captionColorBad: () => 'Caption color must look like #RRGGBB.',
+    captionFontBad: () => 'Caption font name is not valid.',
+    captionSizeBad: () => 'Caption size must be 30-140.',
+    captionOutlineBad: () => 'Caption outline must be 0-12 and position 0-1500.',
+    wordNotFound: (i) => `Word not found: ${i}`,
+    rangeOutside: (max) => `The range must lie inside the Source (0 - ${max} s).`,
+    rangeTooShort: (min) => `A Clip must be at least ${min} s long.`,
+    clipNotFound: (id) => `Clip not found: ${id}`,
+    projectNotFound: (id) => `Project not found: ${id}`,
+    projectBadId: (id) => `Invalid project id: ${id}`,
+    projectDamaged: (d) => `Project file is damaged: ${d}`,
+    layoutDamaged: (d) => `Layout file is damaged: ${d}`,
+    titleEmpty: () => 'Title must not be empty.',
+    keyEmpty: () => 'API key must not be empty.',
+    keyStoreMissing: () => 'The key store is not available.',
+    modelEmpty: () => 'Model name must not be empty.',
+    languageBad: () => 'Language is not valid.',
+    translationEmpty: () => 'The translation from Gemini was empty. Try again.',
+    exportFailed: (d) => `Export failed: ${d}`,
+    saveFailed: (what, d) => `Cannot save ${what}: ${d}`,
+    saveWhat: { caption: 'caption', translation: 'translation', view: 'view', queue: 'queue', project: 'project', layout: 'layout', settings: 'settings', setting: 'setting', export: 'export', 'the cut': 'the cut' },
+    captionFileFailed: (d) => `Cannot write caption file: ${d}`,
+    folderFailed: (what, d) => `Cannot ${what}: ${d}`,
+    folderWhat: { 'create output folder': 'create output folder', 'create folder': 'create folder', 'use that folder': 'use that folder', 'open folder': 'open folder' },
+    folderPathBad: () => 'Choose a full folder path (for example C:\\Videos\\Cruxvid).',
+    keyNeeded: () => 'No Gemini API key yet. Enter a key in Settings to use the AI features.',
+    keyRejected: () => 'Invalid key: Gemini rejected this API key. Check the key in Settings.',
+    quotaUsed: () => 'Quota used up: the Gemini usage limit was reached. Try again later or pick another model in Settings.',
+    network: () => 'Network problem: cannot reach Gemini. Check your internet connection and try again.',
+    geminiHttp: (code) => `Gemini returned HTTP ${code}.`,
+    geminiNotJson: (d) => `Gemini response is not JSON: ${d}`,
+    geminiNoText: () => 'Gemini response has no text.',
+    geminiBadShape: (d) => `Gemini answer does not match the expected shape: ${d}`,
+    layoutUnknown: (name) => `Unknown layout: ${name}`,
+    layoutNoPane: (i, name) => `No pane ${i} in layout ${name}`,
+    frameFailed: (d) => `Cannot read a preview frame: ${d}`,
+    credentialOpen: (d) => `Cannot open the credential store: ${d}`,
+    credentialRead: (d) => `Cannot read the API key from the credential store: ${d}`,
+    credentialSave: (d) => `Cannot save the API key to the credential store: ${d}`,
+    credentialRemove: (d) => `Cannot remove the API key from the credential store: ${d}`,
+    fileNotFound: (p) => `File not found: ${p}`,
+    notVideo: (name) => `${name} is not a video file.`,
+    speakerPrepare: (d) => `Cannot prepare the Clip for speaker detection: ${d}`,
+    ytdlpNoInfo: () => 'yt-dlp gave no video information for this link.',
+    live: () => 'This stream is still live. Wait until it has ended, then paste the link of the recording.',
+    ytdlpNoLength: () => 'This link has no video with a known length.',
+    ytdlpMissing: (bin, d) => `Cannot run yt-dlp (${bin}): ${d}. Install yt-dlp or put yt-dlp.exe in the Cruxvid data folder.`,
+    ytdlpNoAudio: () => 'yt-dlp downloaded no audio for this link.',
+    cutUnverified: () => 'The Clip cut from this link could not be verified (duration or sound do not match). Try again.',
+    ytdlpNoFile: () => 'yt-dlp produced no file for this Clip.',
+  },
 };
+
+const id = {
+  source: 'Sumber',
+  clips: 'Clip',
+  pathPlaceholder: 'Path ke file video lokal, atau link YouTube / Twitch / video',
+  browse: 'Telusuri...',
+  analyze: 'Analisis',
+  analyzing: 'Menganalisis...',
+  noClips: 'Analisis selesai tetapi tidak ada Clip yang cocok untuk 60-120 dtk.',
+  hook: 'Skor hook',
+  export: 'Ekspor',
+  exporting: 'Mengekspor...',
+  exported: (p) => `Tersimpan ${p}`,
+  runTest: 'Jalankan tes',
+
+  caption: 'Caption',
+  captionPreset: 'Preset',
+  captionPresets: { classic: 'klasik', bold: 'tebal', soft: 'lembut', pop: 'pop' },
+  captionFont: 'Font',
+  captionSize: 'Ukuran',
+  captionColor: 'Warna',
+  captionHighlight: 'Sorotan',
+  captionOutline: 'Garis tepi',
+  captionPosition: 'Posisi',
+  captionWords: 'Kata (ubah untuk mengoreksi; kosongkan untuk mengembalikan yang asli)',
+
+  settings: 'Pengaturan',
+  uiLanguage: 'Bahasa',
+  uiTheme: 'Tema',
+  themes: { system: 'Ikuti sistem', dark: 'Gelap', light: 'Terang' },
+  model: 'Model Gemini',
+  saveModel: 'Simpan model',
+  modelSaved: 'Model tersimpan.',
+  keyTitle: 'API key Gemini diperlukan',
+  keyHelp: 'Analisis AI memakai API key Gemini milikmu sendiri. Key disimpan di Windows Credential Manager.',
+  keySave: 'Simpan key',
+  keyCancel: 'Batal',
+  keyChange: 'Ganti key',
+  keyRemove: 'Hapus key',
+  keySet: 'API key sudah tersimpan.',
+  keyUnset: 'Belum ada API key. Semua fitur selain analisis AI tetap bisa dipakai tanpa key.',
+  tokenEstimate: (e) =>
+    `Perkiraan pemakaian Gemini: sekitar ${e.total.toLocaleString('id-ID')} token (${e.input.toLocaleString('id-ID')} masuk, ${e.output.toLocaleString('id-ID')} keluar) untuk video ${Math.round(e.duration / 60)} menit.`,
+
+  layout: 'Layout',
+  layoutPresets: { focus: 'Fokus', stack: 'Split atas-bawah', webcam_game: 'Split orang + game', full: 'Penuh' },
+  layoutNotices: {
+    no_face: 'Tidak ada wajah di Clip ini, memakai Layout Penuh.',
+    multiple_faces: 'Ada beberapa wajah, memakai Layout Penuh. Pilih Layout untuk mengubahnya.',
+    follow_speaker: 'Mengikuti siapa yang berbicara. Pilih Layout lain untuk mengubahnya.',
+  },
+  layoutHint: 'Seret panel untuk menggeser crop-nya, atau fokuskan lalu pakai tombol panah.',
+  speakerScrub: 'Waktu pratinjau (dtk)',
+
+  clipOrder: 'Urutan',
+  clipOrders: { timeline: 'Linimasa', hook: 'Skor hook' },
+  clipThreshold: 'Skor hook minimum',
+
+  queue: 'Antrean ekspor',
+  queueExportSelected: 'Ekspor yang dipilih',
+  queueRetryFailed: 'Ulangi yang gagal',
+  queueStatus: { waiting: 'Menunggu', running: 'Berjalan', done: 'Selesai', failed: 'Gagal' },
+  outputFolder: 'Folder output',
+  outputBrowse: 'Telusuri...',
+  outputSave: 'Simpan',
+  openFolder: 'Buka folder',
+  outputSaved: (p) => `Folder output: ${p}`,
+  folderOpened: (p) => `Dibuka ${p}`,
+
+  clipTitle: 'Judul',
+  clipDescription: 'Deskripsi',
+  regenerate: 'Buat ulang',
+  save: 'Simpan',
+  clipTextSaved: 'Tersimpan.',
+
+  history: 'Project',
+  historyOpen: 'Buka',
+
+  clipLanguage: 'Bahasa caption',
+  languageOriginal: 'Asli',
+  translating: 'Menerjemahkan...',
+  languages: { English: 'Inggris', Indonesian: 'Indonesia', Spanish: 'Spanyol', French: 'Prancis', German: 'Jerman', Portuguese: 'Portugis', Japanese: 'Jepang', Korean: 'Korea', Chinese: 'Mandarin' },
+
+  manualOpen: 'Buka tanpa analisis',
+  manualAdd: 'Tambah Clip',
+  preview: 'Pratinjau',
+  rangeStart: 'Mulai',
+  rangeEnd: 'Selesai',
+  rangeApply: 'Terapkan rentang',
+  badTime: 'Masukkan waktu seperti 95 atau 1:35.',
+  previewFailed: 'Video ini tidak bisa diputar di sini.',
+  rangeWarnings: {
+    too_short: 'Kurang dari 60 dtk. Tetap bisa diekspor.',
+    too_long: 'Lebih dari 120 dtk. Tetap bisa diekspor.',
+  },
+
+  errors: {
+    ffmpegMissing: (d) => `Tidak bisa menjalankan ffmpeg (sudah terpasang?): ${d}`,
+    ffprobeMissing: (d) => `Tidak bisa menjalankan ffprobe (ffmpeg sudah terpasang?): ${d}`,
+    noAudio: () => 'Tidak bisa membaca audio video ini (apakah ada suaranya?).',
+    tooLong: () => 'Video ini terlalu panjang untuk dikirim ke Gemini sekaligus (batasnya sekitar 90 menit).',
+    captionColorBad: () => 'Warna caption harus berbentuk #RRGGBB.',
+    captionFontBad: () => 'Nama font caption tidak valid.',
+    captionSizeBad: () => 'Ukuran caption harus 30-140.',
+    captionOutlineBad: () => 'Garis tepi caption harus 0-12 dan posisi 0-1500.',
+    wordNotFound: (i) => `Kata tidak ditemukan: ${i}`,
+    rangeOutside: (max) => `Rentang harus berada di dalam Sumber (0 - ${max} dtk).`,
+    rangeTooShort: (min) => `Sebuah Clip minimal ${min} dtk.`,
+    clipNotFound: (id) => `Clip tidak ditemukan: ${id}`,
+    projectNotFound: (id) => `Project tidak ditemukan: ${id}`,
+    projectBadId: (id) => `ID project tidak valid: ${id}`,
+    projectDamaged: (d) => `File project rusak: ${d}`,
+    layoutDamaged: (d) => `File layout rusak: ${d}`,
+    titleEmpty: () => 'Judul tidak boleh kosong.',
+    keyEmpty: () => 'API key tidak boleh kosong.',
+    keyStoreMissing: () => 'Penyimpanan key tidak tersedia.',
+    modelEmpty: () => 'Nama model tidak boleh kosong.',
+    languageBad: () => 'Bahasa tidak valid.',
+    translationEmpty: () => 'Terjemahan dari Gemini kosong. Coba lagi.',
+    exportFailed: (d) => `Ekspor gagal: ${d}`,
+    saveFailed: (what, d) => `Tidak bisa menyimpan ${what}: ${d}`,
+    saveWhat: { caption: 'caption', translation: 'terjemahan', view: 'tampilan', queue: 'antrean', project: 'project', layout: 'layout', settings: 'pengaturan', setting: 'pengaturan', export: 'hasil ekspor', 'the cut': 'potongan' },
+    captionFileFailed: (d) => `Tidak bisa menulis file caption: ${d}`,
+    folderFailed: (what, d) => `Tidak bisa ${what}: ${d}`,
+    folderWhat: { 'create output folder': 'membuat folder output', 'create folder': 'membuat folder', 'use that folder': 'memakai folder itu', 'open folder': 'membuka folder' },
+    folderPathBad: () => 'Pilih path folder lengkap (misalnya C:\\Videos\\Cruxvid).',
+    keyNeeded: () => 'API key Gemini belum diisi. Masukkan key di Pengaturan untuk memakai fitur AI.',
+    keyRejected: () => 'Key tidak valid: Gemini menolak API key ini. Periksa key di Pengaturan.',
+    quotaUsed: () => 'Kuota habis: batas penggunaan Gemini tercapai. Coba lagi nanti atau pakai model lain di Pengaturan.',
+    network: () => 'Jaringan bermasalah: tidak bisa menghubungi Gemini. Periksa koneksi internet lalu coba lagi.',
+    geminiHttp: (code) => `Gemini mengembalikan HTTP ${code}.`,
+    geminiNotJson: (d) => `Jawaban Gemini bukan JSON: ${d}`,
+    geminiNoText: () => 'Jawaban Gemini tidak berisi teks.',
+    geminiBadShape: (d) => `Jawaban Gemini tidak sesuai bentuk yang diharapkan: ${d}`,
+    layoutUnknown: (name) => `Layout tidak dikenal: ${name}`,
+    layoutNoPane: (i, name) => `Tidak ada panel ${i} di layout ${name}`,
+    frameFailed: (d) => `Tidak bisa membaca frame pratinjau: ${d}`,
+    credentialOpen: (d) => `Tidak bisa membuka penyimpanan kredensial: ${d}`,
+    credentialRead: (d) => `Tidak bisa membaca API key dari penyimpanan kredensial: ${d}`,
+    credentialSave: (d) => `Tidak bisa menyimpan API key ke penyimpanan kredensial: ${d}`,
+    credentialRemove: (d) => `Tidak bisa menghapus API key dari penyimpanan kredensial: ${d}`,
+    fileNotFound: (p) => `File tidak ditemukan: ${p}`,
+    notVideo: (name) => `${name} bukan file video.`,
+    speakerPrepare: (d) => `Tidak bisa menyiapkan Clip untuk deteksi pembicara: ${d}`,
+    ytdlpNoInfo: () => 'yt-dlp tidak memberi informasi video untuk link ini.',
+    live: () => 'Siaran ini masih live. Tunggu sampai siarannya selesai, lalu tempel link rekamannya.',
+    ytdlpNoLength: () => 'Link ini tidak berisi video dengan durasi yang diketahui.',
+    ytdlpMissing: (bin, d) => `yt-dlp tidak bisa dijalankan (${bin}): ${d}. Pasang yt-dlp atau taruh yt-dlp.exe di folder data Cruxvid.`,
+    ytdlpNoAudio: () => 'yt-dlp tidak mengunduh audio untuk link ini.',
+    cutUnverified: () => 'Potongan Clip dari link ini gagal diverifikasi (durasi atau suara tidak sesuai). Coba lagi.',
+    ytdlpNoFile: () => 'yt-dlp tidak menghasilkan file untuk Clip ini.',
+  },
+};
+
+export const tables = { en, id };
+export const LANGUAGES = Object.keys(tables);
+export const DEFAULT_LANGUAGE = 'id';
+
+let current = DEFAULT_LANGUAGE;
+export const getLanguage = () => current;
+export const setLanguage = (lang) => void (current = tables[lang] ? lang : DEFAULT_LANGUAGE);
+
+export const strings = new Proxy({}, { get: (_, key) => tables[current][key] });

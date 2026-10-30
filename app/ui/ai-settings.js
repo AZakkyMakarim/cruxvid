@@ -1,5 +1,6 @@
 // AI settings: Gemini model field, API key (dialog on first AI use + Settings), token estimate before analysis.
 import { aiStatus, clearApiKey, estimateTokens, saveApiKey, setModel } from './api.js';
+import { errorText, onLanguageChange } from './i18n.js';
 import { strings } from './strings.js';
 
 const $ = (id) => document.getElementById(id);
@@ -12,17 +13,6 @@ export function initAiSettings() {
   const keyStatus = $('key-status');
   const modelInput = $('model-input');
   const modelStatus = $('model-status');
-
-  for (const [id, text] of Object.entries({
-    'key-title': strings.keyTitle,
-    'key-help': strings.keyHelp,
-    'key-save': strings.keySave,
-    'key-cancel': strings.keyCancel,
-    'key-change': strings.keyChange,
-    'key-remove': strings.keyRemove,
-    'model-label': strings.model,
-    'model-save': strings.saveModel,
-  })) $(id).textContent = text;
 
   async function refresh() {
     const s = await aiStatus();
@@ -50,7 +40,7 @@ export function initAiSettings() {
           await refresh();
           done(true);
         } catch (e) {
-          keyError.textContent = String(e);
+          keyError.textContent = errorText(e);
         }
       };
       $('key-cancel').onclick = () => done(false);
@@ -67,12 +57,16 @@ export function initAiSettings() {
       await setModel(modelInput.value);
       modelStatus.textContent = strings.modelSaved;
     } catch (e) {
-      modelStatus.textContent = String(e);
+      modelStatus.textContent = errorText(e);
     }
     await refresh();
   });
 
   refresh();
+  onLanguageChange(() => {
+    modelStatus.textContent = '';
+    refresh();
+  });
 
   return async function beforeAnalyze(path) {
     $('token-estimate').textContent = '';

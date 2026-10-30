@@ -55,7 +55,7 @@ test('translate one Clip to English: its Caption and metadata change, other Clip
         // Translation fails: error shown, Caption and metadata stay.
         gemini.close();
         await rows.nth(1).locator('.clip-language').selectOption('Spanish');
-        await expect(rows.nth(1).locator('.clip-language-status')).toContainText('Jaringan');
+        await expect(rows.nth(1).locator('.clip-language-status')).toContainText('Network problem');
         await expect(rows.nth(1).locator('.clip-language')).toHaveValue('');
         await expect(rows.nth(1).locator('.clip-title-input')).toHaveValue('Second topic');
         expect(await captionWords(1)).not.toContain('translated');

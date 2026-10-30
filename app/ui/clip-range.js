@@ -1,6 +1,7 @@
 // Per-Clip range editor (cruxvid-b2t.17): Preview plays exactly start-end of the Source; start/end can be edited and saved.
 // Needs no API key. The 60-120 s rule lives in Rust (`range_warning`); a range outside it only shows a warning.
 import { clipPreview, previewUrl, rangeWarning, setClipRange } from './api.js';
+import { errorText } from './i18n.js';
 import { strings } from './strings.js';
 
 /** "95", "95.5", "1:35" or "1:02:03" -> seconds; NaN when it is none of those. */
@@ -100,7 +101,7 @@ export function attachClipRange(li, project, clip, onChange) {
       video.hidden = false;
       await playRange(video, preview);
     } catch (e) {
-      error.textContent = String(e?.message ?? e);
+      error.textContent = errorText(e);
     } finally {
       previewBtn.disabled = false;
     }
@@ -120,7 +121,7 @@ export function attachClipRange(li, project, clip, onChange) {
       warning.dataset.warning = saved.warning ?? '';
       onChange(clip);
     } catch (err) {
-      error.textContent = String(err);
+      error.textContent = errorText(err);
     } finally {
       applyBtn.disabled = false;
     }

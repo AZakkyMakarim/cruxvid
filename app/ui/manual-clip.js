@@ -2,6 +2,7 @@
 // Neither needs an API key, so neither goes through the key dialog.
 import { addManualClip, createManualProject } from './api.js';
 import { parseTime, showRangeWarning } from './clip-range.js';
+import { errorText } from './i18n.js';
 import { strings } from './strings.js';
 
 /**
@@ -19,10 +20,6 @@ export function initManualClip({ onProject, onClips }) {
   const sourceError = document.getElementById('error');
   let project = null;
 
-  openBtn.textContent = strings.manualOpen;
-  addBtn.textContent = strings.manualAdd;
-  document.getElementById('manual-start-label').textContent = strings.rangeStart;
-  document.getElementById('manual-end-label').textContent = strings.rangeEnd;
   addBtn.disabled = true;
 
   const typed = () => [parseTime(start.value), parseTime(end.value)];
@@ -42,7 +39,7 @@ export function initManualClip({ onProject, onClips }) {
       document.getElementById('status').textContent = '';
       onProject(opened);
     } catch (e) {
-      sourceError.textContent = String(e);
+      sourceError.textContent = errorText(e);
     } finally {
       openBtn.disabled = false;
     }
@@ -59,7 +56,7 @@ export function initManualClip({ onProject, onClips }) {
       onClips(added.project);
       warning.textContent = added.warning ? strings.rangeWarnings[added.warning] : '';
     } catch (err) {
-      error.textContent = String(err);
+      error.textContent = errorText(err);
     } finally {
       addBtn.disabled = !project;
     }
