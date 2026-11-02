@@ -5,7 +5,22 @@
 - **Android / Maestro:** not run. No Android app exists (tickets `cruxvid-b2t.19`–`.26` open), `adb devices` is empty. No bugs filed for this.
 - **Environment:** Windows 11 Pro 10.0.26300, WebView2 (Chromium) attached with Playwright 1.55.0, Maestro 2.11.0 installed but unused, ffprobe on PATH.
 
-> **STALE BUILD WARNING.** `app/src-tauri/target/release/cruxvid.exe` was built 2026-10-30 17:05. Commit `285f597` (2026-10-30 17:49, "close review findings on races, stale trims, queue, names, yt-dlp") changed 16 files under `app/src-tauri/src` after that. Two failures below are explained by it. Rebuild the exe (`cd app && npm run build`, or `cargo build --release` in `app/src-tauri`) and run `/full-test rerun` before trusting them.
+## Rerun (2026-11-02, after exe rebuild)
+
+`cruxvid.exe` is now dated 2026-11-02 13:47, newer than the last source change (`285f597`, 2026-10-30 17:49), so the stale-build warning no longer applies. Ran the previously failed cases, the flaky case and the smoke set: **9 of 9 pass**.
+
+| Case | Result now | Was |
+|---|---|---|
+| TC-001 (smoke) | pass | pass |
+| TC-002 (smoke, `app.spec.ts`, 3 tests) | pass | pass |
+| TC-003, TC-004 (`tracer.spec.ts`, 2 tests) | pass | pass |
+| TC-005 (`ai-settings.spec.ts`) | pass, first try | flaky |
+| TC-105 | **pass** | fail (2/2), stale exe |
+| TC-109 | **pass** | fail (2/2), stale exe |
+
+No bugs filed or commented (none existed). TC-105 and TC-109 are confirmed fixed by `285f597`. TC-005 did not recur, so it stays unfiled.
+
+The tables below are from the original 2026-11-02 baseline run against the stale exe; TC-105 and TC-109 are superseded by the rerun above.
 
 ## Summary
 
@@ -44,11 +59,11 @@ Smoke (`TC-001`, `TC-002`, `TC-003`): pass. No bugs filed (both failures are kno
 | TC-102 | web | pass | | |
 | TC-103 | web | pass | | |
 | TC-104 | web | pass | | |
-| TC-105 | web | **fail (2/2)** | none | Second Export of the same Clip overwrote the first file (1 file, expected 2). Fixed in source by `reserve()` in `285f597`, which the exe predates. Not filed |
+| TC-105 | web | **pass on rerun** (was fail 2/2) | none | Second Export of the same Clip overwrote the first file (1 file, expected 2). Fixed in source by `reserve()` in `285f597`, which the exe predates. Not filed |
 | TC-106 | web | pass | | |
 | TC-107 | web | pass | | |
 | TC-108 | web | pass | | |
-| TC-109 | web | **fail (2/2)** | none | After the app was killed while the first of three jobs was running, reopening the Project left job 1 at "Waiting" forever (jobs 2 and 3 ran to Done, so only two files). Matches the old `queue.rs`, where a job left `Running` on disk is hidden as `Waiting` but never re-run; the current `run_with` resets such jobs at worker start. Fixed in source by `285f597`. Not filed |
+| TC-109 | web | **pass on rerun** (was fail 2/2) | none | After the app was killed while the first of three jobs was running, reopening the Project left job 1 at "Waiting" forever (jobs 2 and 3 ran to Done, so only two files). Matches the old `queue.rs`, where a job left `Running` on disk is hidden as `Waiting` but never re-run; the current `run_with` resets such jobs at worker start. Fixed in source by `285f597`. Not filed |
 | TC-110 | web | pass | | |
 | TC-111 | web | pass | | |
 | TC-112 | web | pass | | |
