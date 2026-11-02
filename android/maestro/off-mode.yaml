@@ -1,0 +1,8 @@
+appId: app.cruxvid.baseline
+---
+- launchApp:
+    clearState: true
+- assertVisible: "resolver=yt-dlp"
+- assertNotVisible: "gemini=http://10.0.2.2:8787"
+- tapOn: "Test"
+- assertVisible: "result=ok:yt-dlp"

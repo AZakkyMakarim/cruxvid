@@ -1,0 +1,8 @@
+appId: app.cruxvid.baseline
+---
+- launchApp:
+    clearState: true
+- assertVisible: "result=idle"
+- tapOn: "Test"
+- assertVisible: "result=ok:fake"
+- assertVisible: "resolver=fake"
